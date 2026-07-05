@@ -13,9 +13,10 @@
 
 # Go build
 /bin/
+
 # Executables
-server
-floroll
+/server
+/floroll
 
 # Logs
 *.log
