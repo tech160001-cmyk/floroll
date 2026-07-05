@@ -1,0 +1,131 @@
+{{define "employees-content"}}
+<div class="page-header">
+    <h1>Сотрудники</h1>
+    <button type="button"
+            class="btn-add"
+            hx-get="/employees/form"
+            hx-target="#employee-form"
+            hx-swap="innerHTML">
+        + Добавить сотрудника
+    </button>
+</div>
+
+<div id="employee-form"></div>
+
+<div id="employee-list" class="employee-cards">
+    {{range .Employees}}
+    {{template "employees-card" .}}
+    {{else}}
+    <p class="employee-cards-empty">Пока нет сотрудников. Нажмите «+ Добавить сотрудника».</p>
+    {{end}}
+</div>
+{{end}}
+
+{{define "employees-card"}}
+<article class="employee-card">
+    <h2 class="employee-card-name">{{.Name}}</h2>
+    <p class="employee-card-shop">{{.Shop}}</p>
+
+    <dl class="employee-card-stats">
+        <div class="employee-card-stat">
+            <dt>Ставка</dt>
+            <dd>{{printf "%.0f" .ShiftRate}} ₽</dd>
+        </div>
+        <div class="employee-card-stat">
+            <dt>Процент</dt>
+            <dd>{{printf "%.1f" .RevenuePercent}}%</dd>
+        </div>
+    </dl>
+
+    <div class="employee-card-actions">
+        <a href="/employees/{{.ID}}" class="employee-card-btn employee-card-btn-secondary">Открыть</a>
+        <a href="/employees/{{.ID}}/shifts/new" class="employee-card-btn employee-card-btn-primary">Добавить смену</a>
+    </div>
+</article>
+{{end}}
+
+{{define "employees-form"}}
+<form class="simple-form"
+      hx-post="/employees"
+      hx-target="#employee-list"
+      hx-swap="beforeend"
+      hx-on::after-request="if(event.detail.successful) { this.reset(); document.querySelector('.employee-cards-empty')?.remove(); }">
+    {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
+
+    <label>
+        Имя
+        <input type="text" name="name" value="{{.Name}}" required>
+    </label>
+
+    <label>
+        Магазин
+        <input type="text" name="shop" value="{{.Shop}}" required>
+    </label>
+
+    <label>
+        Ставка за смену
+        <input type="number" name="shift_rate" value="{{.ShiftRate}}" min="0" step="1" required>
+    </label>
+
+    <label>
+        Процент от выручки
+        <input type="number" name="revenue_percent" value="{{.RevenuePercent}}" min="0" step="0.1" required>
+    </label>
+
+    <button type="submit">Сохранить</button>
+</form>
+{{end}}
+
+{{define "employee-profile-content"}}
+<a href="/employees" class="back-link">← К сотрудникам</a>
+
+<header class="employee-profile-header">
+    <h1 class="employee-profile-name">{{.Employee.Name}}</h1>
+    <p class="employee-profile-shop">{{.Employee.Shop}}</p>
+    <dl class="employee-profile-stats">
+        <div class="employee-profile-stat">
+            <dt>Ставка</dt>
+            <dd>{{printf "%.0f" .Employee.ShiftRate}} ₽</dd>
+        </div>
+        <div class="employee-profile-stat">
+            <dt>Процент</dt>
+            <dd>{{printf "%.1f" .Employee.RevenuePercent}}%</dd>
+        </div>
+    </dl>
+</header>
+
+<section class="employee-profile-section">
+    <h2 class="employee-profile-section-title">Лента операций</h2>
+    <div class="timeline">
+        {{range .Operations}}
+        {{template "timeline-row" .}}
+        {{else}}
+        <p class="timeline-empty">Операций пока нет</p>
+        {{end}}
+    </div>
+</section>
+
+<a href="/employees/{{.Employee.ID}}/operations" class="employee-profile-action">+ Добавить операцию</a>
+{{end}}
+
+{{define "employee-detail-content"}}
+<a href="/employees" class="back-link">← К списку</a>
+
+<article class="employee-detail">
+    <header class="employee-detail-header">
+        <h1>{{.Name}}</h1>
+        <p class="employee-detail-shop">{{.Shop}}</p>
+    </header>
+
+    <dl class="employee-detail-stats">
+        <div class="employee-detail-stat">
+            <dt>Ставка за смену</dt>
+            <dd>{{printf "%.0f" .ShiftRate}} ₽</dd>
+        </div>
+        <div class="employee-detail-stat">
+            <dt>Процент от выручки</dt>
+            <dd>{{printf "%.1f" .RevenuePercent}}%</dd>
+        </div>
+    </dl>
+</article>
+{{end}}

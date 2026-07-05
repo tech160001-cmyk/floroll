@@ -1,0 +1,111 @@
+{{define "shifts-content"}}
+<div class="page-header">
+    <h1>Смены</h1>
+    <button type="button"
+            class="btn-add"
+            hx-get="/shifts/form{{if .Form.EmployeeID}}?employee_id={{.Form.EmployeeID}}{{end}}"
+            hx-target="#shift-form"
+            hx-swap="innerHTML">
+        + Добавить смену
+    </button>
+</div>
+
+<div id="shift-form">
+    {{if .ShowForm}}
+    {{template "shifts-form" .Form}}
+    {{end}}
+</div>
+
+<div id="shift-list" class="shift-list">
+    {{range .Shifts}}
+    {{template "shifts-row" .}}
+    {{else}}
+    <p class="shift-list-empty">Пока нет смен. Нажмите «+ Добавить смену».</p>
+    {{end}}
+</div>
+{{end}}
+
+{{define "shifts-row"}}
+<article class="shift-card">
+    <div class="shift-card-header">
+        <span class="shift-card-date">{{.Date}}</span>
+        <span class="shift-card-type shift-card-type-{{.ShiftKind}}">{{.ShiftKind.Label}}</span>
+    </div>
+    <h2 class="shift-card-name">{{.EmployeeName}}</h2>
+    <p class="shift-card-shop">{{.Shop}}</p>
+    <dl class="shift-card-stats">
+        <div class="shift-card-stat">
+            <dt>Выручка</dt>
+            <dd>{{printf "%.0f" .Revenue}} ₽</dd>
+        </div>
+        <div class="shift-card-stat">
+            <dt>Оплата</dt>
+            <dd>{{printf "%.0f" .Amount}} ₽</dd>
+        </div>
+    </dl>
+</article>
+{{end}}
+
+{{define "shifts-form"}}
+<form class="simple-form shift-form"
+      hx-post="/shifts"
+      hx-target="#shift-list"
+      hx-swap="afterbegin"
+      hx-on::after-request="if(event.detail.successful) { this.reset(); document.querySelector('.shift-list-empty')?.remove(); }">
+    {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
+
+    <label>
+        Сотрудник
+        <select name="employee_id" required
+                hx-get="/shifts/form"
+                hx-trigger="change"
+                hx-target="#shift-form"
+                hx-swap="innerHTML"
+                hx-include=".shift-form">
+            <option value="">— выберите —</option>
+            {{range .Employees}}
+            <option value="{{.ID}}" {{if eq $.EmployeeID (printf "%d" .ID)}}selected{{end}}>{{.Name}}</option>
+            {{end}}
+        </select>
+    </label>
+
+    <label>
+        Дата
+        <input type="date" name="shift_date" value="{{.Date}}" required>
+    </label>
+
+    <label>
+        Магазин
+        <input type="text" name="shop" value="{{.Shop}}" required>
+    </label>
+
+    <label>
+        Выручка
+        <input type="number" name="revenue" value="{{.Revenue}}" min="0" step="1" required>
+    </label>
+
+    <label>
+        Тип смены
+        <select name="shift_type"
+                hx-get="/shifts/form"
+                hx-trigger="change"
+                hx-target="#shift-form"
+                hx-swap="innerHTML"
+                hx-include=".shift-form">
+            <option value="regular" {{if eq .ShiftType "regular"}}selected{{end}}>Обычная</option>
+            <option value="substitute" {{if eq .ShiftType "substitute"}}selected{{end}}>Подработка</option>
+        </select>
+    </label>
+
+    {{if .ShowPayment}}
+    <label>
+        Оплата
+        <input type="number" name="custom_payment" value="{{.CustomPayment}}" min="0" step="1" required>
+    </label>
+    {{else}}
+    <p class="shift-form-hint">Оплата: ставка сотрудника за смену</p>
+    {{end}}
+
+    <button type="submit">Сохранить</button>
+</form>
+{{end}}

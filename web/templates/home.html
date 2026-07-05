@@ -1,0 +1,29 @@
+{{define "home-content"}}
+<div class="dashboard">
+    <header class="dashboard-header">
+        <h1>FloRoll</h1>
+        <p class="dashboard-greeting">Обзор на сегодня</p>
+    </header>
+
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <span class="stat-label">Сотрудников</span>
+            <span class="stat-value">{{.EmployeeCount}}</span>
+        </div>
+        <div class="stat-card stat-card-accent">
+            <span class="stat-label">К выплате</span>
+            <span class="stat-value">{{printf "%.0f" .TotalPay}} ₽</span>
+        </div>
+    </div>
+
+    <a href="/operations/new" class="dashboard-action">+ Добавить операцию</a>
+
+    <section class="dashboard-recent">
+        <h2 class="dashboard-recent-title">Последние действия</h2>
+        <div class="dashboard-recent-empty">
+            <p>Пока нет записей</p>
+            <span>Здесь появятся смены, авансы и другие операции</span>
+        </div>
+    </section>
+</div>
+{{end}}

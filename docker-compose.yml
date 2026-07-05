@@ -1,0 +1,16 @@
+services:
+  floroll:
+    build: .
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    env_file:
+      - .env
+    environment:
+      FLOROLL_ROOT: /app
+      DATABASE_PATH: /app/data/floroll.db
+    volumes:
+      - floroll-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  floroll-data:

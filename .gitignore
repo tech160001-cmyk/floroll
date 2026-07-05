@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Environment
+.env
+!.env.example
+
+# SQLite
+*.db
+
+# Go build
+/bin/
+# Executables
+server
+floroll
+
+# Logs
+*.log

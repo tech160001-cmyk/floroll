@@ -1,0 +1,105 @@
+{{define "employee-operations-content"}}
+<a href="/employees/{{.Employee.ID}}" class="back-link">← К профилю</a>
+
+<article class="employee-card employee-card-compact">
+    <h2 class="employee-card-name">{{.Employee.Name}}</h2>
+    <p class="employee-card-shop">{{.Employee.Shop}}</p>
+    <dl class="employee-card-stats">
+        <div class="employee-card-stat">
+            <dt>Ставка</dt>
+            <dd>{{printf "%.0f" .Employee.ShiftRate}} ₽</dd>
+        </div>
+        <div class="employee-card-stat">
+            <dt>Процент</dt>
+            <dd>{{printf "%.1f" .Employee.RevenuePercent}}%</dd>
+        </div>
+    </dl>
+</article>
+
+<div class="page-header operations-header">
+    <h1>Операции</h1>
+    <button type="button"
+            class="btn-add"
+            hx-get="/employees/{{.Employee.ID}}/operations/form"
+            hx-target="#operation-form"
+            hx-swap="innerHTML">
+        + Добавить операцию
+    </button>
+</div>
+
+<div id="operation-form"></div>
+
+<div id="operation-list" class="timeline">
+    {{range .Operations}}
+    {{template "timeline-row" .}}
+    {{else}}
+    <p class="timeline-empty">Пока нет операций.</p>
+    {{end}}
+</div>
+{{end}}
+
+{{define "timeline-row"}}
+<article class="timeline-item timeline-item-{{.Type}}">
+    <div class="timeline-item-header">
+        <span class="timeline-item-date">{{.Date}}</span>
+        <span class="timeline-item-type">{{.Type.Label}}</span>
+    </div>
+
+    {{if .IsShift}}
+    <p class="timeline-item-meta">{{.Shop}}</p>
+    {{if .ShiftKind}}<span class="timeline-item-badge timeline-item-badge-{{.ShiftKind}}">{{.ShiftKind.Label}}</span>{{end}}
+    <dl class="timeline-item-stats">
+        <div class="timeline-item-stat">
+            <dt>Выручка</dt>
+            <dd>{{printf "%.0f" .Revenue}} ₽</dd>
+        </div>
+        <div class="timeline-item-stat">
+            <dt>Оплата</dt>
+            <dd>{{printf "%.0f" .Amount}} ₽</dd>
+        </div>
+    </dl>
+    {{else}}
+    <p class="timeline-item-amount">{{printf "%.0f" .Amount}} ₽</p>
+    {{if .Comment}}<p class="timeline-item-comment">{{.Comment}}</p>{{end}}
+    {{end}}
+</article>
+{{end}}
+
+{{define "operations-form"}}
+<form class="simple-form"
+      hx-post="/employees/{{.EmployeeID}}/operations"
+      hx-target="#operation-list"
+      hx-swap="afterbegin"
+      hx-on::after-request="if(event.detail.successful) { this.reset(); document.querySelector('.timeline-empty')?.remove(); }">
+    {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
+
+    <input type="hidden" name="employee_id" value="{{.EmployeeID}}">
+
+    <label>
+        Дата
+        <input type="date" name="op_date" value="{{.Date}}" required>
+    </label>
+
+    <label>
+        Тип операции
+        <select name="op_type" required>
+            <option value="fine" {{if eq .Type "fine"}}selected{{end}}>Штраф</option>
+            <option value="advance" {{if eq .Type "advance"}}selected{{end}}>Аванс</option>
+            <option value="debt" {{if eq .Type "debt"}}selected{{end}}>Товар в долг</option>
+            <option value="bonus" {{if eq .Type "bonus"}}selected{{end}}>Бонус</option>
+        </select>
+    </label>
+
+    <label>
+        Сумма
+        <input type="number" name="amount" value="{{.Amount}}" min="1" step="1" required>
+    </label>
+
+    <label>
+        Комментарий
+        <input type="text" name="comment" value="{{.Comment}}" placeholder="Необязательно">
+    </label>
+
+    <button type="submit">Сохранить</button>
+</form>
+{{end}}
