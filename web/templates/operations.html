@@ -1,53 +1,57 @@
 {{define "employee-operations-content"}}
-<a href="/employees/{{.Employee.ID}}" class="back-link">← К профилю</a>
+<div class="page">
+    <a href="/employees/{{.Employee.ID}}" class="back-link">← К профилю</a>
 
-<article class="employee-card employee-card-compact">
-    <h2 class="employee-card-name">{{.Employee.Name}}</h2>
-    <p class="employee-card-shop">{{.Employee.Shop}}</p>
-    <dl class="employee-card-stats">
-        <div class="employee-card-stat">
-            <dt>Ставка</dt>
-            <dd>{{printf "%.0f" .Employee.ShiftRate}} ₽</dd>
+    <article class="card employee-card employee-card-compact">
+        <h2 class="employee-card-name">{{.Employee.Name}}</h2>
+        <p class="employee-card-shop">{{.Employee.Shop}}</p>
+        <dl class="employee-card-stats">
+            <div class="employee-card-stat">
+                <dt>Ставка</dt>
+                <dd>{{printf "%.0f" .Employee.ShiftRate}} ₽</dd>
+            </div>
+            <div class="employee-card-stat">
+                <dt>Процент</dt>
+                <dd>{{printf "%.1f" .Employee.RevenuePercent}}%</dd>
+            </div>
+        </dl>
+    </article>
+
+    <header class="page-header operations-header">
+        <div class="page-header-text">
+            <p class="page-eyebrow">Финансы</p>
+            <h1 class="page-title">{{template "icon-chart-column"}}<span>Операции</span></h1>
         </div>
-        <div class="employee-card-stat">
-            <dt>Процент</dt>
-            <dd>{{printf "%.1f" .Employee.RevenuePercent}}%</dd>
-        </div>
-    </dl>
-</article>
+        <button type="button"
+                class="btn btn-primary btn-add modal-trigger"
+                data-modal-title="Добавить операцию"
+                hx-get="/employees/{{.Employee.ID}}/operations/form"
+                hx-target="#modal-content"
+                hx-swap="innerHTML">
+            {{template "icon-plus"}}<span>Добавить операцию</span>
+        </button>
+    </header>
 
-<div class="page-header operations-header">
-    <h1>Операции</h1>
-    <button type="button"
-            class="btn-add"
-            hx-get="/employees/{{.Employee.ID}}/operations/form"
-            hx-target="#operation-form"
-            hx-swap="innerHTML">
-        + Добавить операцию
-    </button>
-</div>
-
-<div id="operation-form"></div>
-
-<div id="operation-list" class="timeline">
-    {{range .Operations}}
-    {{template "timeline-row" .}}
-    {{else}}
-    <p class="timeline-empty">Пока нет операций.</p>
-    {{end}}
+    <div id="operation-list" class="timeline">
+        {{range .Operations}}
+        {{template "timeline-row" .}}
+        {{else}}
+        {{template "empty-operations" .Employee}}
+        {{end}}
+    </div>
 </div>
 {{end}}
 
 {{define "timeline-row"}}
-<article class="timeline-item timeline-item-{{.Type}}">
+<article class="card timeline-item timeline-item-{{.Type}}">
     <div class="timeline-item-header">
         <span class="timeline-item-date">{{.Date}}</span>
-        <span class="timeline-item-type">{{.Type.Label}}</span>
+        <span class="badge timeline-item-type">{{.Type.Label}}</span>
     </div>
 
     {{if .IsShift}}
     <p class="timeline-item-meta">{{.Shop}}</p>
-    {{if .ShiftKind}}<span class="timeline-item-badge timeline-item-badge-{{.ShiftKind}}">{{.ShiftKind.Label}}</span>{{end}}
+    {{if .ShiftKind}}<span class="badge badge-soft timeline-item-badge timeline-item-badge-{{.ShiftKind}}">{{.ShiftKind.Label}}</span>{{end}}
     <dl class="timeline-item-stats">
         <div class="timeline-item-stat">
             <dt>Выручка</dt>
@@ -70,19 +74,19 @@
       hx-post="/employees/{{.EmployeeID}}/operations"
       hx-target="#operation-list"
       hx-swap="afterbegin"
-      hx-on::after-request="if(event.detail.successful) { this.reset(); document.querySelector('.timeline-empty')?.remove(); }">
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); this.reset(); document.querySelector('.timeline-empty')?.remove(); }">
     {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
 
     <input type="hidden" name="employee_id" value="{{.EmployeeID}}">
 
-    <label>
-        Дата
-        <input type="date" name="op_date" value="{{.Date}}" required>
+    <label class="field">
+        <span class="field-label">Дата</span>
+        <input class="form-control" type="date" name="op_date" value="{{.Date}}" required>
     </label>
 
-    <label>
-        Тип операции
-        <select name="op_type" required>
+    <label class="field">
+        <span class="field-label">Тип операции</span>
+        <select class="form-control" name="op_type" required>
             <option value="fine" {{if eq .Type "fine"}}selected{{end}}>Штраф</option>
             <option value="advance" {{if eq .Type "advance"}}selected{{end}}>Аванс</option>
             <option value="debt" {{if eq .Type "debt"}}selected{{end}}>Товар в долг</option>
@@ -90,16 +94,16 @@
         </select>
     </label>
 
-    <label>
-        Сумма
-        <input type="number" name="amount" value="{{.Amount}}" min="1" step="1" required>
+    <label class="field">
+        <span class="field-label">Сумма</span>
+        <input class="form-control" type="number" name="amount" value="{{.Amount}}" min="1" step="1" required>
     </label>
 
-    <label>
-        Комментарий
-        <input type="text" name="comment" value="{{.Comment}}" placeholder="Необязательно">
+    <label class="field">
+        <span class="field-label">Комментарий</span>
+        <input class="form-control" type="text" name="comment" value="{{.Comment}}" placeholder="Необязательно">
     </label>
 
-    <button type="submit">Сохранить</button>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
 </form>
 {{end}}

@@ -1,29 +1,27 @@
 {{define "home-content"}}
 <div class="dashboard">
-    <header class="dashboard-header">
-        <h1>FloRoll</h1>
-        <p class="dashboard-greeting">Обзор на сегодня</p>
+    <header class="dashboard-hero">
+        <p class="dashboard-eyebrow">FloRoll</p>
+        <h1 class="dashboard-title">Обзор на сегодня</h1>
+        <p class="dashboard-subtitle">Спокойный взгляд на команду и выплаты вашего магазина</p>
     </header>
 
     <div class="dashboard-stats">
-        <div class="stat-card">
-            <span class="stat-label">Сотрудников</span>
-            <span class="stat-value">{{.EmployeeCount}}</span>
-        </div>
-        <div class="stat-card stat-card-accent">
-            <span class="stat-label">К выплате</span>
+        <article class="card stat-card stat-card-accent">
+            <span class="stat-label">{{template "icon-wallet"}}<span>К выплате</span></span>
             <span class="stat-value">{{printf "%.0f" .TotalPay}} ₽</span>
-        </div>
+        </article>
+        <article class="card stat-card">
+            <span class="stat-label">{{template "icon-user-round"}}<span>Сотрудников</span></span>
+            <span class="stat-value">{{.EmployeeCount}}</span>
+        </article>
     </div>
 
-    <a href="/operations/new" class="dashboard-action">+ Добавить операцию</a>
+    <a href="/employees" class="btn btn-primary btn-lg dashboard-cta">{{template "icon-plus"}}<span>Добавить операцию</span></a>
 
-    <section class="dashboard-recent">
-        <h2 class="dashboard-recent-title">Последние действия</h2>
-        <div class="dashboard-recent-empty">
-            <p>Пока нет записей</p>
-            <span>Здесь появятся смены, авансы и другие операции</span>
-        </div>
+    <section class="dashboard-recent" aria-labelledby="recent-title">
+        <h2 id="recent-title" class="section-label">{{template "icon-chart-column"}}<span>Последние действия</span></h2>
+        {{template "empty-accruals"}}
     </section>
 </div>
 {{end}}

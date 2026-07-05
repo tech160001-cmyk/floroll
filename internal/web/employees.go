@@ -173,7 +173,7 @@ func (h *Handler) renderPartial(w http.ResponseWriter, name string, data any) {
 }
 
 func (h *Handler) renderFormError(w http.ResponseWriter, form employeeFormData) {
-	w.Header().Set("HX-Retarget", "#employee-form")
+	w.Header().Set("HX-Retarget", "#modal-content")
 	w.Header().Set("HX-Reswap", "innerHTML")
 	h.renderPartial(w, "employees-form", form)
 }

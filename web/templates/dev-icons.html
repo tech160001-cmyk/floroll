@@ -1,0 +1,31 @@
+{{define "dev-icons-content"}}
+<div class="page dev-icons">
+    <header class="dev-icons-header">
+        <p class="page-eyebrow">Dev</p>
+        <h1 class="page-title">Icon library</h1>
+        <p class="dev-icons-lead">SVG-иконки из <code>web/static/icons</code></p>
+    </header>
+
+    <div class="dev-icons-grid">
+        {{range $icon := .Icons}}
+        <article class="card dev-icons-card">
+            <div class="dev-icons-sizes">
+                {{range $.Sizes}}
+                <div class="dev-icons-size">
+                    <img
+                        class="dev-icons-img"
+                        src="/static/icons/{{$icon}}"
+                        width="{{.}}"
+                        height="{{.}}"
+                        alt=""
+                    >
+                    <span class="dev-icons-size-label">{{.}} px</span>
+                </div>
+                {{end}}
+            </div>
+            <p class="dev-icons-name">{{$icon}}</p>
+        </article>
+        {{end}}
+    </div>
+</div>
+{{end}}

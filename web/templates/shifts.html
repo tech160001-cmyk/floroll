@@ -1,35 +1,47 @@
 {{define "shifts-content"}}
-<div class="page-header">
-    <h1>Смены</h1>
-    <button type="button"
-            class="btn-add"
-            hx-get="/shifts/form{{if .Form.EmployeeID}}?employee_id={{.Form.EmployeeID}}{{end}}"
-            hx-target="#shift-form"
-            hx-swap="innerHTML">
-        + Добавить смену
-    </button>
-</div>
+<div class="page">
+    <header class="page-header">
+        <div class="page-header-text">
+            <p class="page-eyebrow">Расписание</p>
+            <h1 class="page-title">{{template "icon-calendar-days"}}<span>Смены</span></h1>
+        </div>
+        <button type="button"
+                class="btn btn-primary btn-add modal-trigger"
+                data-modal-title="Добавить смену"
+                hx-get="/shifts/form{{if .Form.EmployeeID}}?employee_id={{.Form.EmployeeID}}{{end}}"
+                hx-target="#modal-content"
+                hx-swap="innerHTML">
+            {{template "icon-plus"}}<span>Добавить смену</span>
+        </button>
+    </header>
 
-<div id="shift-form">
-    {{if .ShowForm}}
-    {{template "shifts-form" .Form}}
-    {{end}}
+    <div id="shift-list" class="shift-list">
+        {{range .Shifts}}
+        {{template "shifts-row" .}}
+        {{else}}
+        {{template "empty-shifts"}}
+        {{end}}
+    </div>
 </div>
-
-<div id="shift-list" class="shift-list">
-    {{range .Shifts}}
-    {{template "shifts-row" .}}
-    {{else}}
-    <p class="shift-list-empty">Пока нет смен. Нажмите «+ Добавить смену».</p>
-    {{end}}
-</div>
+{{if .ShowForm}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    htmx.ajax("GET", "/shifts/form{{if .Form.EmployeeID}}?employee_id={{.Form.EmployeeID}}{{end}}", {
+        target: "#modal-content",
+        swap: "innerHTML"
+    }).then(function () {
+        Modal.open("Добавить смену");
+    });
+});
+</script>
+{{end}}
 {{end}}
 
 {{define "shifts-row"}}
-<article class="shift-card">
+<article class="card shift-card">
     <div class="shift-card-header">
         <span class="shift-card-date">{{.Date}}</span>
-        <span class="shift-card-type shift-card-type-{{.ShiftKind}}">{{.ShiftKind.Label}}</span>
+        <span class="badge badge-soft shift-card-type shift-card-type-{{.ShiftKind}}">{{.ShiftKind.Label}}</span>
     </div>
     <h2 class="shift-card-name">{{.EmployeeName}}</h2>
     <p class="shift-card-shop">{{.Shop}}</p>
@@ -51,15 +63,15 @@
       hx-post="/shifts"
       hx-target="#shift-list"
       hx-swap="afterbegin"
-      hx-on::after-request="if(event.detail.successful) { this.reset(); document.querySelector('.shift-list-empty')?.remove(); }">
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); this.reset(); document.querySelector('.shift-list-empty')?.remove(); }">
     {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
 
-    <label>
-        Сотрудник
-        <select name="employee_id" required
+    <label class="field">
+        <span class="field-label">Сотрудник</span>
+        <select class="form-control" name="employee_id" required
                 hx-get="/shifts/form"
                 hx-trigger="change"
-                hx-target="#shift-form"
+                hx-target="#modal-content"
                 hx-swap="innerHTML"
                 hx-include=".shift-form">
             <option value="">— выберите —</option>
@@ -69,27 +81,27 @@
         </select>
     </label>
 
-    <label>
-        Дата
-        <input type="date" name="shift_date" value="{{.Date}}" required>
+    <label class="field">
+        <span class="field-label">Дата</span>
+        <input class="form-control" type="date" name="shift_date" value="{{.Date}}" required>
     </label>
 
-    <label>
-        Магазин
-        <input type="text" name="shop" value="{{.Shop}}" required>
+    <label class="field">
+        <span class="field-label">Магазин</span>
+        <input class="form-control" type="text" name="shop" value="{{.Shop}}" required>
     </label>
 
-    <label>
-        Выручка
-        <input type="number" name="revenue" value="{{.Revenue}}" min="0" step="1" required>
+    <label class="field">
+        <span class="field-label">Выручка</span>
+        <input class="form-control" type="number" name="revenue" value="{{.Revenue}}" min="0" step="1" required>
     </label>
 
-    <label>
-        Тип смены
-        <select name="shift_type"
+    <label class="field">
+        <span class="field-label">Тип смены</span>
+        <select class="form-control" name="shift_type"
                 hx-get="/shifts/form"
                 hx-trigger="change"
-                hx-target="#shift-form"
+                hx-target="#modal-content"
                 hx-swap="innerHTML"
                 hx-include=".shift-form">
             <option value="regular" {{if eq .ShiftType "regular"}}selected{{end}}>Обычная</option>
@@ -98,14 +110,14 @@
     </label>
 
     {{if .ShowPayment}}
-    <label>
-        Оплата
-        <input type="number" name="custom_payment" value="{{.CustomPayment}}" min="0" step="1" required>
+    <label class="field">
+        <span class="field-label">Оплата</span>
+        <input class="form-control" type="number" name="custom_payment" value="{{.CustomPayment}}" min="0" step="1" required>
     </label>
     {{else}}
-    <p class="shift-form-hint">Оплата: ставка сотрудника за смену</p>
+    <p class="form-hint">Оплата: ставка сотрудника за смену</p>
     {{end}}
 
-    <button type="submit">Сохранить</button>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
 </form>
 {{end}}

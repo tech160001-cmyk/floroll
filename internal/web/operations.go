@@ -164,7 +164,7 @@ func isValidOperationType(t operation.Type) bool {
 }
 
 func (h *Handler) renderOperationFormError(w http.ResponseWriter, form operationFormData) {
-	w.Header().Set("HX-Retarget", "#operation-form")
+	w.Header().Set("HX-Retarget", "#modal-content")
 	w.Header().Set("HX-Reswap", "innerHTML")
 	h.renderPartial(w, "operations-form", form)
 }

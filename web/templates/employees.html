@@ -1,28 +1,32 @@
 {{define "employees-content"}}
-<div class="page-header">
-    <h1>Сотрудники</h1>
-    <button type="button"
-            class="btn-add"
-            hx-get="/employees/form"
-            hx-target="#employee-form"
-            hx-swap="innerHTML">
-        + Добавить сотрудника
-    </button>
-</div>
+<div class="page">
+    <header class="page-header">
+        <div class="page-header-text">
+            <p class="page-eyebrow">Команда</p>
+            <h1 class="page-title">{{template "icon-user-round"}}<span>Сотрудники</span></h1>
+        </div>
+        <button type="button"
+                class="btn btn-primary btn-add modal-trigger"
+                data-modal-title="Добавить сотрудника"
+                hx-get="/employees/form"
+                hx-target="#modal-content"
+                hx-swap="innerHTML">
+            {{template "icon-plus"}}<span>Добавить сотрудника</span>
+        </button>
+    </header>
 
-<div id="employee-form"></div>
-
-<div id="employee-list" class="employee-cards">
-    {{range .Employees}}
-    {{template "employees-card" .}}
-    {{else}}
-    <p class="employee-cards-empty">Пока нет сотрудников. Нажмите «+ Добавить сотрудника».</p>
-    {{end}}
+    <div id="employee-list" class="employee-cards">
+        {{range .Employees}}
+        {{template "employees-card" .}}
+        {{else}}
+        {{template "empty-employees"}}
+        {{end}}
+    </div>
 </div>
 {{end}}
 
 {{define "employees-card"}}
-<article class="employee-card">
+<article class="card employee-card">
     <h2 class="employee-card-name">{{.Name}}</h2>
     <p class="employee-card-shop">{{.Shop}}</p>
 
@@ -38,8 +42,8 @@
     </dl>
 
     <div class="employee-card-actions">
-        <a href="/employees/{{.ID}}" class="employee-card-btn employee-card-btn-secondary">Открыть</a>
-        <a href="/employees/{{.ID}}/shifts/new" class="employee-card-btn employee-card-btn-primary">Добавить смену</a>
+        <a href="/employees/{{.ID}}" class="btn btn-secondary employee-card-btn">Открыть</a>
+        <a href="/employees/{{.ID}}/shifts/new" class="btn btn-primary employee-card-btn">Добавить смену</a>
     </div>
 </article>
 {{end}}
@@ -49,83 +53,95 @@
       hx-post="/employees"
       hx-target="#employee-list"
       hx-swap="beforeend"
-      hx-on::after-request="if(event.detail.successful) { this.reset(); document.querySelector('.employee-cards-empty')?.remove(); }">
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); this.reset(); document.querySelector('.employee-cards-empty')?.remove(); }">
     {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
 
-    <label>
-        Имя
-        <input type="text" name="name" value="{{.Name}}" required>
+    <label class="field">
+        <span class="field-label">Имя</span>
+        <input class="form-control" type="text" name="name" value="{{.Name}}" required>
     </label>
 
-    <label>
-        Магазин
-        <input type="text" name="shop" value="{{.Shop}}" required>
+    <label class="field">
+        <span class="field-label">Магазин</span>
+        <input class="form-control" type="text" name="shop" value="{{.Shop}}" required>
     </label>
 
-    <label>
-        Ставка за смену
-        <input type="number" name="shift_rate" value="{{.ShiftRate}}" min="0" step="1" required>
+    <label class="field">
+        <span class="field-label">Ставка за смену</span>
+        <input class="form-control" type="number" name="shift_rate" value="{{.ShiftRate}}" min="0" step="1" required>
     </label>
 
-    <label>
-        Процент от выручки
-        <input type="number" name="revenue_percent" value="{{.RevenuePercent}}" min="0" step="0.1" required>
+    <label class="field">
+        <span class="field-label">Процент от выручки</span>
+        <input class="form-control" type="number" name="revenue_percent" value="{{.RevenuePercent}}" min="0" step="0.1" required>
     </label>
 
-    <button type="submit">Сохранить</button>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
 </form>
 {{end}}
 
 {{define "employee-profile-content"}}
-<a href="/employees" class="back-link">← К сотрудникам</a>
+<div class="page">
+    <a href="/employees" class="back-link">← К сотрудникам</a>
 
-<header class="employee-profile-header">
-    <h1 class="employee-profile-name">{{.Employee.Name}}</h1>
-    <p class="employee-profile-shop">{{.Employee.Shop}}</p>
-    <dl class="employee-profile-stats">
-        <div class="employee-profile-stat">
-            <dt>Ставка</dt>
-            <dd>{{printf "%.0f" .Employee.ShiftRate}} ₽</dd>
+    <header class="card employee-profile-header">
+        <p class="page-eyebrow">Профиль</p>
+        <h1 class="employee-profile-name">{{.Employee.Name}}</h1>
+        <p class="employee-profile-shop">{{.Employee.Shop}}</p>
+        <dl class="employee-profile-stats">
+            <div class="employee-profile-stat">
+                <dt>Ставка</dt>
+                <dd>{{printf "%.0f" .Employee.ShiftRate}} ₽</dd>
+            </div>
+            <div class="employee-profile-stat">
+                <dt>Процент</dt>
+                <dd>{{printf "%.1f" .Employee.RevenuePercent}}%</dd>
+            </div>
+        </dl>
+    </header>
+
+    <section class="employee-profile-section">
+        <h2 class="section-label">Лента операций</h2>
+        <div class="timeline" id="operation-list">
+            {{range .Operations}}
+            {{template "timeline-row" .}}
+            {{else}}
+            {{template "empty-operations" .Employee}}
+            {{end}}
         </div>
-        <div class="employee-profile-stat">
-            <dt>Процент</dt>
-            <dd>{{printf "%.1f" .Employee.RevenuePercent}}%</dd>
-        </div>
-    </dl>
-</header>
+    </section>
 
-<section class="employee-profile-section">
-    <h2 class="employee-profile-section-title">Лента операций</h2>
-    <div class="timeline">
-        {{range .Operations}}
-        {{template "timeline-row" .}}
-        {{else}}
-        <p class="timeline-empty">Операций пока нет</p>
-        {{end}}
-    </div>
-</section>
-
-<a href="/employees/{{.Employee.ID}}/operations" class="employee-profile-action">+ Добавить операцию</a>
+    <button type="button"
+            class="btn btn-primary btn-lg employee-profile-action modal-trigger"
+            data-modal-title="Добавить операцию"
+            hx-get="/employees/{{.Employee.ID}}/operations/form"
+            hx-target="#modal-content"
+            hx-swap="innerHTML">
+        {{template "icon-plus"}}<span>Добавить операцию</span>
+    </button>
+</div>
 {{end}}
 
 {{define "employee-detail-content"}}
-<a href="/employees" class="back-link">← К списку</a>
+<div class="page">
+    <a href="/employees" class="back-link">← К списку</a>
 
-<article class="employee-detail">
-    <header class="employee-detail-header">
-        <h1>{{.Name}}</h1>
-        <p class="employee-detail-shop">{{.Shop}}</p>
-    </header>
+    <article class="card employee-detail">
+        <header class="employee-detail-header">
+            <h1>{{.Name}}</h1>
+            <p class="employee-detail-shop">{{.Shop}}</p>
+        </header>
 
-    <dl class="employee-detail-stats">
-        <div class="employee-detail-stat">
-            <dt>Ставка за смену</dt>
-            <dd>{{printf "%.0f" .ShiftRate}} ₽</dd>
-        </div>
-        <div class="employee-detail-stat">
-            <dt>Процент от выручки</dt>
-            <dd>{{printf "%.1f" .RevenuePercent}}%</dd>
-        </div>
-    </dl>
-</article>
+        <dl class="employee-detail-stats">
+            <div class="employee-detail-stat">
+                <dt>Ставка за смену</dt>
+                <dd>{{printf "%.0f" .ShiftRate}} ₽</dd>
+            </div>
+            <div class="employee-detail-stat">
+                <dt>Процент от выручки</dt>
+                <dd>{{printf "%.1f" .RevenuePercent}}%</dd>
+            </div>
+        </dl>
+    </article>
+</div>
 {{end}}

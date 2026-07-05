@@ -240,7 +240,7 @@ func parseAmount(value string) (float64, error) {
 }
 
 func (h *Handler) renderShiftFormError(w http.ResponseWriter, form shiftFormData) {
-	w.Header().Set("HX-Retarget", "#shift-form")
+	w.Header().Set("HX-Retarget", "#modal-content")
 	w.Header().Set("HX-Reswap", "innerHTML")
 	h.renderPartial(w, "shifts-form", form)
 }

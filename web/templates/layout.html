@@ -5,17 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} — FloRoll</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 </head>
-<body>
+<body class="app">
     <header class="header">
         <div class="container header-inner">
-            <a href="/" class="logo">FloRoll 🌸</a>
-            <nav class="nav">
-                <a href="/employees">Сотрудники</a>
-                <a href="/shifts">Смены</a>
-                <a href="/payroll">Зарплата</a>
+            <a href="/" class="logo">FloRoll <span class="logo-mark">{{template "icon-flower-2"}}</span></a>
+            <nav class="nav" aria-label="Основная навигация">
+                <a href="/employees" class="nav-link">{{template "icon-user-round"}}<span>Сотрудники</span></a>
+                <a href="/shifts" class="nav-link">{{template "icon-calendar-days"}}<span>Смены</span></a>
+                <a href="/payroll" class="nav-link">{{template "icon-wallet"}}<span>Зарплата</span></a>
             </nav>
         </div>
     </header>
@@ -25,10 +28,37 @@
     </main>
 
     <footer class="footer">
-        <div class="container">
+        <div class="container footer-inner">
             <p>FloRoll — расчёт зарплаты для цветочных магазинов</p>
         </div>
     </footer>
+
+    <div id="modal" class="modal" hidden aria-hidden="true">
+        <div class="modal-backdrop" data-modal-close></div>
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <button type="button" class="modal-close" data-modal-close aria-label="Закрыть">
+                {{template "icon-x"}}
+            </button>
+            <h2 id="modal-title" class="modal-title"></h2>
+            <div id="modal-content" class="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="/static/modal.js"></script>
+    <script>
+    (function () {
+        var path = window.location.pathname;
+        document.querySelectorAll(".nav-link").forEach(function (link) {
+            var href = link.getAttribute("href");
+            if (!href || href === "/") {
+                return;
+            }
+            if (path === href || path.indexOf(href + "/") === 0) {
+                link.classList.add("nav-link--active");
+            }
+        });
+    })();
+    </script>
 </body>
 </html>
 {{end}}

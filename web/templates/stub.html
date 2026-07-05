@@ -1,7 +1,17 @@
 {{define "stub-content"}}
-<section class="stub">
+<div class="page">
+    {{if eq .Title "Зарплата"}}
     <a href="/" class="back-link">← На главную</a>
-    <h1>{{.Title}}</h1>
-    <p class="stub-text">Раздел в разработке. Скоро здесь появится функционал.</p>
-</section>
+    {{template "empty-accruals"}}
+    {{else}}
+    <section class="card stub">
+        <a href="/" class="back-link">← На главную</a>
+        <h1 class="page-title">
+            {{if eq .Title "Добавить операцию"}}{{template "icon-plus"}}{{end}}
+            <span>{{.Title}}</span>
+        </h1>
+        <p class="empty-text">Раздел в разработке. Скоро здесь появится функционал.</p>
+    </section>
+    {{end}}
+</div>
 {{end}}
