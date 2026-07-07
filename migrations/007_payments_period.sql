@@ -1,0 +1,2 @@
+-- Миграция выполняется из Go (updatePaymentsSchemaIfNeeded):
+-- payments.period_from, payments.period_to, payments.created_at.

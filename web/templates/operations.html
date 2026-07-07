@@ -22,6 +22,7 @@
             <p class="page-eyebrow">Финансы</p>
             <h1 class="page-title">{{template "icon-chart-column"}}<span>Операции</span></h1>
         </div>
+        {{if not .Employee.IsArchived}}
         <button type="button"
                 class="btn btn-primary btn-add modal-trigger"
                 data-modal-title="Добавить операцию"
@@ -30,6 +31,7 @@
                 hx-swap="innerHTML">
             {{template "icon-plus"}}<span>Добавить операцию</span>
         </button>
+        {{end}}
     </header>
 
     <div id="operation-list" class="timeline">
@@ -42,68 +44,164 @@
 </div>
 {{end}}
 
+{{define "operations-new-content"}}
+<div class="page">
+    <a href="/" class="back-link">← На главную</a>
+
+    <header class="page-header">
+        <div class="page-header-text">
+            <p class="page-eyebrow">Финансы</p>
+            <h1 class="page-title">{{template "icon-plus"}}<span>Добавить операцию</span></h1>
+        </div>
+        <button type="button"
+                class="btn btn-primary btn-add modal-trigger"
+                data-modal-title="Добавить операцию"
+                hx-get="/operations/form"
+                hx-target="#modal-content"
+                hx-swap="innerHTML">
+            {{template "icon-plus"}}<span>Новая операция</span>
+        </button>
+    </header>
+
+    <p class="empty-text">Выберите сотрудника и тип операции. Запись появится в истории сотрудника.</p>
+</div>
+{{end}}
+
 {{define "timeline-row"}}
-<article class="card timeline-item timeline-item-{{.Type}}">
+<article id="operation-{{.ID}}" class="card timeline-item timeline-item-{{.Type.TimelineClass}}">
     <div class="timeline-item-header">
         <span class="timeline-item-date">{{.Date}}</span>
-        <span class="badge timeline-item-type">{{.Type.Label}}</span>
+        <span class="badge timeline-item-type timeline-item-type-{{.Type.TimelineClass}}">{{.Type.Label}}</span>
     </div>
 
-    {{if .IsShift}}
-    <p class="timeline-item-meta">{{.Shop}}</p>
-    {{if .ShiftKind}}<span class="badge badge-soft timeline-item-badge timeline-item-badge-{{.ShiftKind}}">{{.ShiftKind.Label}}</span>{{end}}
-    <dl class="timeline-item-stats">
-        <div class="timeline-item-stat">
-            <dt>Выручка</dt>
-            <dd>{{printf "%.0f" .Revenue}} ₽</dd>
-        </div>
-        <div class="timeline-item-stat">
-            <dt>Оплата</dt>
-            <dd>{{printf "%.0f" .Amount}} ₽</dd>
-        </div>
-    </dl>
-    {{else}}
     <p class="timeline-item-amount">{{printf "%.0f" .Amount}} ₽</p>
     {{if .Comment}}<p class="timeline-item-comment">{{.Comment}}</p>{{end}}
-    {{end}}
+    <div class="entity-actions">
+        <button type="button"
+                class="btn btn-secondary btn-sm modal-trigger"
+                data-modal-title="Редактировать операцию"
+                hx-get="/operations/{{.ID}}/edit"
+                hx-target="#modal-content"
+                hx-swap="innerHTML">
+            Редактировать
+        </button>
+        <button type="button"
+                class="btn btn-danger btn-sm modal-trigger"
+                data-modal-title="Удалить операцию"
+                hx-get="/operations/{{.ID}}/delete"
+                hx-target="#modal-content"
+                hx-swap="innerHTML">
+            Удалить
+        </button>
+    </div>
 </article>
 {{end}}
 
 {{define "operations-form"}}
-<form class="simple-form"
+<form class="simple-form operation-form"
+      {{if .IsEdit}}
+      hx-post="/operations/{{.ID}}"
+      hx-target="#operation-{{.ID}}"
+      hx-swap="outerHTML"
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); }"
+      {{else}}
+      {{if .LockedEmployee}}
       hx-post="/employees/{{.EmployeeID}}/operations"
       hx-target="#operation-list"
       hx-swap="afterbegin"
-      hx-on::after-request="if(event.detail.successful) { Modal.close(); this.reset(); document.querySelector('.timeline-empty')?.remove(); }">
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); document.querySelector('.timeline-empty')?.remove(); }"
+      {{else}}
+      hx-post="/operations"
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); }"
+      {{end}}
+      {{end}}>
     {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
 
-    <input type="hidden" name="employee_id" value="{{.EmployeeID}}">
+    {{if .LockedEmployee}}
+    <div class="operation-form-employee operation-form-employee--locked">
+        <span class="operation-form-employee__icon">{{template "icon-user-round"}}</span>
+        <div class="operation-form-employee__text">
+            <span class="operation-form-employee__label">Сотрудник</span>
+            <span class="operation-form-employee__name">{{.EmployeeName}}</span>
+        </div>
+    </div>
+    {{else}}
+    <label class="field">
+        <span class="field-label">Сотрудник</span>
+        <select class="form-control" name="employee_id" required>
+            <option value="">— выберите —</option>
+            {{range .Employees}}
+            <option value="{{.ID}}" {{if eq $.EmployeeID .ID}}selected{{end}}>{{.Name}} · {{.Shop}}</option>
+            {{end}}
+        </select>
+    </label>
+    {{end}}
 
     <label class="field">
         <span class="field-label">Дата</span>
         <input class="form-control" type="date" name="op_date" value="{{.Date}}" required>
     </label>
 
-    <label class="field">
-        <span class="field-label">Тип операции</span>
-        <select class="form-control" name="op_type" required>
-            <option value="fine" {{if eq .Type "fine"}}selected{{end}}>Штраф</option>
-            <option value="advance" {{if eq .Type "advance"}}selected{{end}}>Аванс</option>
-            <option value="debt" {{if eq .Type "debt"}}selected{{end}}>Товар в долг</option>
-            <option value="bonus" {{if eq .Type "bonus"}}selected{{end}}>Бонус</option>
-        </select>
-    </label>
+    <fieldset class="field op-type-picker">
+        <legend class="field-label">Тип операции</legend>
+        <div class="op-type-picker__grid">
+            {{range .Types}}
+            <label class="op-type-option op-type-option--{{.}}">
+                <input class="op-type-option__input"
+                       type="radio"
+                       name="operation_type"
+                       value="{{.}}"
+                       {{if eq $.Type (printf "%s" .)}}checked{{end}}
+                       required>
+                <span class="op-type-option__badge badge">{{.Label}}</span>
+            </label>
+            {{end}}
+        </div>
+    </fieldset>
 
     <label class="field">
         <span class="field-label">Сумма</span>
-        <input class="form-control" type="number" name="amount" value="{{.Amount}}" min="1" step="1" required>
+        <input class="form-control" type="number" name="amount" value="{{.Amount}}" min="1" step="1" placeholder="0" required>
     </label>
 
     <label class="field">
-        <span class="field-label">Комментарий</span>
-        <input class="form-control" type="text" name="comment" value="{{.Comment}}" placeholder="Необязательно">
+        <span class="field-label">Комментарий <span class="field-label-optional">необязательно</span></span>
+        <input class="form-control"
+               type="text"
+               name="comment"
+               value="{{.Comment}}"
+               placeholder="Например: букет, опоздание…"
+               list="operation-comment-suggestions"
+               autocomplete="off">
+        <datalist id="operation-comment-suggestions">
+            <option value="Горшки">
+            <option value="Композиция">
+            <option value="Букет">
+            <option value="Опоздание">
+            <option value="Работа в праздник">
+        </datalist>
     </label>
 
-    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <button type="submit" class="btn btn-primary btn-lg operation-form-submit">{{template "icon-plus"}}<span>Сохранить</span></button>
+</form>
+{{end}}
+
+{{define "operation-delete-confirm"}}
+<form class="confirm-form"
+      hx-post="/operations/{{.ID}}/delete"
+      hx-target="#operation-{{.ID}}"
+      hx-swap="delete"
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); }">
+    <div class="confirm-box">
+        <h3 class="confirm-title">Удалить операцию?</h3>
+        <p class="confirm-text">
+            Операция «{{.Type.Label}}» на сумму {{printf "%.0f" .Amount}} ₽ исчезнет из текущих списков и будущих расчётов.
+            Если она уже входила в подтверждённую выплату, запись будет помечена как отменённая, а snapshot выплаты останется неизменным.
+        </p>
+    </div>
+    <div class="confirm-actions">
+        <button type="button" class="btn btn-secondary" data-modal-close>Отмена</button>
+        <button type="submit" class="btn btn-danger">Удалить</button>
+    </div>
 </form>
 {{end}}

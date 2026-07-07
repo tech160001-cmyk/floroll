@@ -2,6 +2,7 @@ package web
 
 import (
 	"bytes"
+	"errors"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -9,30 +10,35 @@ import (
 	"time"
 
 	"floroll/internal/employee"
-	"floroll/internal/operation"
+	"floroll/internal/shift"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type shiftsPageData struct {
-	Shifts    []operation.Operation
+	Shifts    []shift.Shift
 	Employees []employee.Employee
 	Form      shiftFormData
 	ShowForm  bool
 }
 
 type shiftFormData struct {
-	Error         string
-	Employees     []employee.Employee
-	EmployeeID    string
-	Date          string
-	Shop          string
-	Revenue       string
-	ShiftType     string
-	CustomPayment string
-	ShowPayment   bool
+	Error          string
+	ID             int64
+	IsEdit         bool
+	Employees      []employee.Employee
+	EmployeeID     string
+	EmployeeName   string
+	LockedEmployee bool
+	Date           string
+	Shop           string
+	Revenue        string
+	ShopRevenue    string
+	Comment        string
 }
 
 func (h *Handler) shifts(w http.ResponseWriter, r *http.Request) {
-	list, err := h.operationStore.ListShifts(r.Context())
+	list, err := h.shiftStore.List(r.Context())
 	if err != nil {
 		http.Error(w, "не удалось загрузить смены", http.StatusInternalServerError)
 		return
@@ -40,7 +46,7 @@ func (h *Handler) shifts(w http.ResponseWriter, r *http.Request) {
 
 	employees, err := h.employeeStore.List(r.Context())
 	if err != nil {
-		http.Error(w, "не удалось загрузить сотрудников", http.StatusInternalServerError)
+		h.renderPageError(w, "Смены", "Не удалось загрузить сотрудников. Попробуйте обновить страницу.")
 		return
 	}
 
@@ -61,9 +67,11 @@ func (h *Handler) shifts(w http.ResponseWriter, r *http.Request) {
 		page.Form = shiftFormFromRequest(r, employees)
 		if preselectID > 0 && page.Form.EmployeeID == "" {
 			page.Form.EmployeeID = strconv.FormatInt(preselectID, 10)
+			page.Form.LockedEmployee = true
 			for _, e := range employees {
 				if e.ID == preselectID {
 					page.Form.Shop = e.Shop
+					page.Form.EmployeeName = e.Name
 					break
 				}
 			}
@@ -85,27 +93,55 @@ func (h *Handler) shifts(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) shiftsForm(w http.ResponseWriter, r *http.Request) {
 	employees, err := h.employeeStore.List(r.Context())
 	if err != nil {
-		http.Error(w, "не удалось загрузить сотрудников", http.StatusInternalServerError)
+		h.renderModalError(w, "Не удалось загрузить сотрудников. Попробуйте ещё раз.")
 		return
 	}
 
 	form := shiftFormFromRequest(r, employees)
+
+	if employeeID := r.URL.Query().Get("employee_id"); employeeID != "" {
+		form.EmployeeID = employeeID
+		form.LockedEmployee = true
+		found := false
+		for _, e := range employees {
+			if strconv.FormatInt(e.ID, 10) == employeeID {
+				form.Shop = e.Shop
+				form.EmployeeName = e.Name
+				found = true
+				break
+			}
+		}
+		if !found {
+			id, _ := strconv.ParseInt(employeeID, 10, 64)
+			if emp, err := h.employeeStore.GetByID(r.Context(), id); err == nil && emp.IsArchived() {
+				form.EmployeeName = emp.Name
+				form.Shop = emp.Shop
+				form.Error = "Архивному сотруднику нельзя добавить смену"
+			}
+		}
+	}
+
 	h.renderPartial(w, "shifts-form", form)
 }
 
 func (h *Handler) shiftsCreate(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "неверные данные формы", http.StatusBadRequest)
+		h.renderShiftFormError(w, shiftFormData{Error: "Не удалось прочитать данные формы. Попробуйте ещё раз."})
 		return
 	}
 
 	employees, err := h.employeeStore.List(r.Context())
 	if err != nil {
-		http.Error(w, "не удалось загрузить сотрудников", http.StatusInternalServerError)
+		h.renderModalError(w, "Не удалось загрузить сотрудников. Попробуйте ещё раз.")
 		return
 	}
 
 	form := shiftFormFromRequest(r, employees)
+	form, sh, emp, ok := h.parseShiftForm(r, form)
+	if !ok {
+		h.renderShiftFormError(w, form)
+		return
+	}
 
 	if len(employees) == 0 {
 		form.Error = "Сначала добавьте сотрудников"
@@ -113,96 +149,120 @@ func (h *Handler) shiftsCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	employeeID, err := strconv.ParseInt(form.EmployeeID, 10, 64)
-	if err != nil || employeeID <= 0 {
-		form.Error = "Выберите сотрудника"
-		h.renderShiftFormError(w, form)
-		return
-	}
-
-	if form.Date == "" {
-		form.Error = "Укажите дату"
-		h.renderShiftFormError(w, form)
-		return
-	}
-
-	if _, err := time.Parse("2006-01-02", form.Date); err != nil {
-		form.Error = "Неверный формат даты"
-		h.renderShiftFormError(w, form)
-		return
-	}
-
-	if form.Shop == "" {
-		form.Error = "Укажите магазин"
-		h.renderShiftFormError(w, form)
-		return
-	}
-
-	revenue, err := parseAmount(form.Revenue)
-	if err != nil || revenue < 0 {
-		form.Error = "Укажите корректную выручку"
-		h.renderShiftFormError(w, form)
-		return
-	}
-
-	emp, err := h.employeeStore.GetByID(r.Context(), employeeID)
+	created, err := h.shiftStore.Create(r.Context(), sh)
 	if err != nil {
-		form.Error = "Сотрудник не найден"
+		form.Error = "Не удалось сохранить смену. Попробуйте ещё раз."
 		h.renderShiftFormError(w, form)
-		return
-	}
-
-	shiftKind := operation.ShiftKind(form.ShiftType)
-	if shiftKind != operation.ShiftRegular && shiftKind != operation.ShiftSubstitute {
-		shiftKind = operation.ShiftRegular
-		form.ShiftType = string(operation.ShiftRegular)
-	}
-
-	var payment float64
-	if shiftKind == operation.ShiftSubstitute {
-		payment, err = parseAmount(form.CustomPayment)
-		if err != nil || payment < 0 {
-			form.ShowPayment = true
-			form.Error = "Укажите оплату за подработку"
-			h.renderShiftFormError(w, form)
-			return
-		}
-	} else {
-		payment = emp.ShiftRate
-	}
-
-	created, err := h.operationStore.Create(r.Context(), operation.Operation{
-		EmployeeID: employeeID,
-		Date:       form.Date,
-		Type:       operation.TypeShift,
-		Amount:     payment,
-		Shop:       form.Shop,
-		Revenue:    revenue,
-		ShiftKind:  shiftKind,
-	})
-	if err != nil {
-		http.Error(w, "не удалось сохранить смену", http.StatusInternalServerError)
 		return
 	}
 
 	created.EmployeeName = emp.Name
 
+	h.triggerDashboardRefresh(w)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := h.templates.ExecuteTemplate(w, "shifts-row", created); err != nil {
 		http.Error(w, "ошибка отображения", http.StatusInternalServerError)
 	}
 }
 
-func shiftFormFromRequest(r *http.Request, employees []employee.Employee) shiftFormData {
-	shiftType := r.FormValue("shift_type")
-	if shiftType == "" {
-		if r.URL.Query().Get("shift_type") != "" {
-			shiftType = r.URL.Query().Get("shift_type")
-		} else {
-			shiftType = string(operation.ShiftRegular)
-		}
+func (h *Handler) shiftEditForm(w http.ResponseWriter, r *http.Request) {
+	sh, err := h.loadShiftByParam(w, r)
+	if err != nil {
+		return
 	}
 
+	employees, err := h.employeeStore.List(r.Context())
+	if err != nil {
+		h.renderModalError(w, "Не удалось загрузить сотрудников. Попробуйте ещё раз.")
+		return
+	}
+
+	h.renderPartial(w, "shifts-form", shiftFormData{
+		ID:             sh.ID,
+		IsEdit:         true,
+		Employees:      employees,
+		EmployeeID:     strconv.FormatInt(sh.EmployeeID, 10),
+		EmployeeName:   sh.EmployeeName,
+		Date:           sh.Date,
+		Shop:           sh.Shop,
+		Revenue:        strconv.FormatFloat(sh.Revenue, 'f', -1, 64),
+		ShopRevenue:    strconv.FormatFloat(sh.ShopRevenue, 'f', -1, 64),
+		Comment:        sh.Comment,
+		LockedEmployee: len(employees) == 0,
+	})
+}
+
+func (h *Handler) shiftUpdate(w http.ResponseWriter, r *http.Request) {
+	current, err := h.loadShiftByParam(w, r)
+	if err != nil {
+		return
+	}
+
+	employees, err := h.employeeStore.List(r.Context())
+	if err != nil {
+		h.renderModalError(w, "Не удалось загрузить сотрудников. Попробуйте ещё раз.")
+		return
+	}
+
+	form := shiftFormFromRequest(r, employees)
+	form.ID = current.ID
+	form.IsEdit = true
+	form, sh, emp, ok := h.parseShiftForm(r, form)
+	if !ok {
+		h.renderShiftFormError(w, form)
+		return
+	}
+	sh.ID = current.ID
+
+	updated, err := h.shiftStore.Update(r.Context(), sh)
+	if err != nil {
+		form.Error = "Не удалось сохранить смену. Попробуйте ещё раз."
+		h.renderShiftFormError(w, form)
+		return
+	}
+	updated.EmployeeName = emp.Name
+
+	h.triggerDashboardRefresh(w)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := h.templates.ExecuteTemplate(w, "shifts-row", updated); err != nil {
+		http.Error(w, "ошибка отображения", http.StatusInternalServerError)
+	}
+}
+
+func (h *Handler) shiftDeleteConfirm(w http.ResponseWriter, r *http.Request) {
+	sh, err := h.loadShiftByParam(w, r)
+	if err != nil {
+		return
+	}
+	h.renderPartial(w, "shift-delete-confirm", sh)
+}
+
+func (h *Handler) shiftDelete(w http.ResponseWriter, r *http.Request) {
+	sh, err := h.loadShiftByParam(w, r)
+	if err != nil {
+		return
+	}
+
+	covered, err := h.paymentStore.ExistsForEmployeeDate(r.Context(), sh.EmployeeID, sh.Date)
+	if err != nil {
+		h.renderModalError(w, "Не удалось проверить выплаты. Попробуйте ещё раз.")
+		return
+	}
+	if covered {
+		err = h.shiftStore.Cancel(r.Context(), sh.ID)
+	} else {
+		err = h.shiftStore.Delete(r.Context(), sh.ID)
+	}
+	if err != nil {
+		h.renderModalError(w, "Не удалось удалить смену. Попробуйте ещё раз.")
+		return
+	}
+
+	h.triggerDashboardRefresh(w)
+	w.WriteHeader(http.StatusOK)
+}
+
+func shiftFormFromRequest(r *http.Request, employees []employee.Employee) shiftFormData {
 	employeeID := r.FormValue("employee_id")
 	if employeeID == "" {
 		employeeID = r.URL.Query().Get("employee_id")
@@ -214,33 +274,105 @@ func shiftFormFromRequest(r *http.Request, employees []employee.Employee) shiftF
 	}
 
 	shop := strings.TrimSpace(r.FormValue("shop"))
+	employeeName := strings.TrimSpace(r.FormValue("employee_name"))
 	if shop == "" && employeeID != "" {
 		for _, e := range employees {
 			if strconv.FormatInt(e.ID, 10) == employeeID {
 				shop = e.Shop
+				employeeName = e.Name
 				break
 			}
 		}
 	}
 
-	return shiftFormData{
-		Employees:     employees,
-		EmployeeID:    employeeID,
-		Date:          date,
-		Shop:          shop,
-		Revenue:       r.FormValue("revenue"),
-		ShiftType:     shiftType,
-		CustomPayment: r.FormValue("custom_payment"),
-		ShowPayment:   shiftType == string(operation.ShiftSubstitute),
-	}
-}
+	locked := r.FormValue("locked_employee") == "1" || r.URL.Query().Get("employee_id") != ""
 
-func parseAmount(value string) (float64, error) {
-	return strconv.ParseFloat(strings.Replace(strings.TrimSpace(value), ",", ".", 1), 64)
+	return shiftFormData{
+		Employees:      employees,
+		EmployeeID:     employeeID,
+		EmployeeName:   employeeName,
+		LockedEmployee: locked,
+		Date:           date,
+		Shop:           shop,
+		Revenue:        r.FormValue("revenue"),
+		ShopRevenue:    r.FormValue("shop_revenue"),
+		Comment:        strings.TrimSpace(r.FormValue("comment")),
+	}
 }
 
 func (h *Handler) renderShiftFormError(w http.ResponseWriter, form shiftFormData) {
 	w.Header().Set("HX-Retarget", "#modal-content")
 	w.Header().Set("HX-Reswap", "innerHTML")
 	h.renderPartial(w, "shifts-form", form)
+}
+
+func (h *Handler) parseShiftForm(r *http.Request, form shiftFormData) (shiftFormData, shift.Shift, employee.Employee, bool) {
+	employeeID, err := strconv.ParseInt(form.EmployeeID, 10, 64)
+	if err != nil || employeeID <= 0 {
+		form.Error = "Выберите сотрудника"
+		return form, shift.Shift{}, employee.Employee{}, false
+	}
+
+	if form.Date == "" {
+		form.Error = "Укажите дату"
+		return form, shift.Shift{}, employee.Employee{}, false
+	}
+
+	if _, err := time.Parse("2006-01-02", form.Date); err != nil {
+		form.Error = "Неверный формат даты"
+		return form, shift.Shift{}, employee.Employee{}, false
+	}
+
+	if form.Shop == "" {
+		form.Error = "Укажите магазин"
+		return form, shift.Shift{}, employee.Employee{}, false
+	}
+
+	revenue, err := parseAmount(form.Revenue)
+	if err != nil || revenue < 0 {
+		form.Error = "Укажите корректную личную выручку"
+		return form, shift.Shift{}, employee.Employee{}, false
+	}
+
+	shopRevenue, err := parseAmount(form.ShopRevenue)
+	if err != nil || shopRevenue < 0 {
+		form.Error = "Укажите корректную общую выручку магазина"
+		return form, shift.Shift{}, employee.Employee{}, false
+	}
+
+	emp, err := h.employeeStore.GetByID(r.Context(), employeeID)
+	if err != nil || emp.IsArchived() {
+		form.Error = "Сотрудник не найден или в архиве"
+		return form, shift.Shift{}, employee.Employee{}, false
+	}
+
+	return form, shift.Shift{
+		EmployeeID:  employeeID,
+		Date:        form.Date,
+		Shop:        form.Shop,
+		Revenue:     revenue,
+		ShopRevenue: shopRevenue,
+		Comment:     form.Comment,
+		Payment:     emp.ShiftRate,
+	}, emp, true
+}
+
+func (h *Handler) loadShiftByParam(w http.ResponseWriter, r *http.Request) (shift.Shift, error) {
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.NotFound(w, r)
+		return shift.Shift{}, err
+	}
+
+	sh, err := h.shiftStore.GetByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, shift.ErrNotFound) {
+			http.NotFound(w, r)
+			return shift.Shift{}, err
+		}
+		http.Error(w, "не удалось загрузить смену", http.StatusInternalServerError)
+		return shift.Shift{}, err
+	}
+
+	return sh, nil
 }

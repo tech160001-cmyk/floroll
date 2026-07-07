@@ -38,34 +38,71 @@ document.addEventListener("DOMContentLoaded", function () {
 {{end}}
 
 {{define "shifts-row"}}
-<article class="card shift-card">
+<article id="shift-{{.ID}}" class="card shift-card">
     <div class="shift-card-header">
         <span class="shift-card-date">{{.Date}}</span>
-        <span class="badge badge-soft shift-card-type shift-card-type-{{.ShiftKind}}">{{.ShiftKind.Label}}</span>
+        <span class="badge badge-soft shift-card-payment">{{printf "%.0f" .Payment}} ₽</span>
     </div>
     <h2 class="shift-card-name">{{.EmployeeName}}</h2>
     <p class="shift-card-shop">{{.Shop}}</p>
     <dl class="shift-card-stats">
         <div class="shift-card-stat">
-            <dt>Выручка</dt>
+            <dt>Личная выручка</dt>
             <dd>{{printf "%.0f" .Revenue}} ₽</dd>
         </div>
         <div class="shift-card-stat">
-            <dt>Оплата</dt>
-            <dd>{{printf "%.0f" .Amount}} ₽</dd>
+            <dt>Выручка магазина</dt>
+            <dd>{{printf "%.0f" .ShopRevenue}} ₽</dd>
         </div>
     </dl>
+    {{if .Comment}}<p class="shift-card-comment">{{.Comment}}</p>{{end}}
+    <div class="entity-actions">
+        <button type="button"
+                class="btn btn-secondary btn-sm modal-trigger"
+                data-modal-title="Редактировать смену"
+                hx-get="/shifts/{{.ID}}/edit"
+                hx-target="#modal-content"
+                hx-swap="innerHTML">
+            Редактировать
+        </button>
+        <button type="button"
+                class="btn btn-danger btn-sm modal-trigger"
+                data-modal-title="Удалить смену"
+                hx-get="/shifts/{{.ID}}/delete"
+                hx-target="#modal-content"
+                hx-swap="innerHTML">
+            Удалить
+        </button>
+    </div>
 </article>
 {{end}}
 
 {{define "shifts-form"}}
 <form class="simple-form shift-form"
+      {{if .IsEdit}}
+      hx-post="/shifts/{{.ID}}"
+      hx-target="#shift-{{.ID}}"
+      hx-swap="outerHTML"
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); }"
+      {{else}}
       hx-post="/shifts"
       hx-target="#shift-list"
       hx-swap="afterbegin"
-      hx-on::after-request="if(event.detail.successful) { Modal.close(); this.reset(); document.querySelector('.shift-list-empty')?.remove(); }">
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); this.reset(); document.querySelector('.shift-list-empty')?.remove(); }"
+      {{end}}>
     {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
 
+    {{if .LockedEmployee}}
+    <input type="hidden" name="employee_id" value="{{.EmployeeID}}">
+    <input type="hidden" name="locked_employee" value="1">
+    <div class="operation-form-employee operation-form-employee--locked">
+        <span class="operation-form-employee__icon">{{template "icon-user-round"}}</span>
+        <div class="operation-form-employee__text">
+            <span class="operation-form-employee__label">Сотрудник</span>
+            <span class="operation-form-employee__name">{{.EmployeeName}}</span>
+        </div>
+    </div>
+    {{else}}
     <label class="field">
         <span class="field-label">Сотрудник</span>
         <select class="form-control" name="employee_id" required
@@ -80,6 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
             {{end}}
         </select>
     </label>
+    {{end}}
 
     <label class="field">
         <span class="field-label">Дата</span>
@@ -92,32 +130,42 @@ document.addEventListener("DOMContentLoaded", function () {
     </label>
 
     <label class="field">
-        <span class="field-label">Выручка</span>
-        <input class="form-control" type="number" name="revenue" value="{{.Revenue}}" min="0" step="1" required>
+        <span class="field-label">Личная выручка</span>
+        <input class="form-control" type="number" name="revenue" value="{{.Revenue}}" min="0" step="1" placeholder="0" required>
     </label>
 
     <label class="field">
-        <span class="field-label">Тип смены</span>
-        <select class="form-control" name="shift_type"
-                hx-get="/shifts/form"
-                hx-trigger="change"
-                hx-target="#modal-content"
-                hx-swap="innerHTML"
-                hx-include=".shift-form">
-            <option value="regular" {{if eq .ShiftType "regular"}}selected{{end}}>Обычная</option>
-            <option value="substitute" {{if eq .ShiftType "substitute"}}selected{{end}}>Подработка</option>
-        </select>
+        <span class="field-label">Выручка магазина</span>
+        <input class="form-control" type="number" name="shop_revenue" value="{{.ShopRevenue}}" min="0" step="1" placeholder="0" required>
     </label>
 
-    {{if .ShowPayment}}
     <label class="field">
-        <span class="field-label">Оплата</span>
-        <input class="form-control" type="number" name="custom_payment" value="{{.CustomPayment}}" min="0" step="1" required>
+        <span class="field-label">Комментарий <span class="field-label-optional">необязательно</span></span>
+        <input class="form-control" type="text" name="comment" value="{{.Comment}}" placeholder="Заметка к смене…">
     </label>
-    {{else}}
+
     <p class="form-hint">Оплата: ставка сотрудника за смену</p>
-    {{end}}
 
     <button type="submit" class="btn btn-primary">Сохранить</button>
+</form>
+{{end}}
+
+{{define "shift-delete-confirm"}}
+<form class="confirm-form"
+      hx-post="/shifts/{{.ID}}/delete"
+      hx-target="#shift-{{.ID}}"
+      hx-swap="delete"
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); }">
+    <div class="confirm-box">
+        <h3 class="confirm-title">Удалить смену?</h3>
+        <p class="confirm-text">
+            Смена {{.EmployeeName}} за {{.Date}} исчезнет из текущих списков и будущих расчётов.
+            Если она уже входила в подтверждённую выплату, запись будет помечена как отменённая, а история выплаты останется неизменной.
+        </p>
+    </div>
+    <div class="confirm-actions">
+        <button type="button" class="btn btn-secondary" data-modal-close>Отмена</button>
+        <button type="submit" class="btn btn-danger">Удалить</button>
+    </div>
 </form>
 {{end}}

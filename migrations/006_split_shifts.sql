@@ -1,0 +1,2 @@
+-- Миграция выполняется из Go (splitShiftsFromOperationsIfNeeded):
+-- shifts, payments — отдельные таблицы; operations — только финансовые операции.

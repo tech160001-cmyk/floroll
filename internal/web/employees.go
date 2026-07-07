@@ -21,6 +21,8 @@ type employeesPageData struct {
 
 type employeeFormData struct {
 	Error          string
+	ID             int64
+	IsEdit         bool
 	Name           string
 	Shop           string
 	ShiftRate      string
@@ -59,73 +61,100 @@ func (h *Handler) employeesForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) employeesCreate(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "неверные данные формы", http.StatusBadRequest)
-		return
-	}
-
-	form := employeeFormData{
-		Name:           strings.TrimSpace(r.FormValue("name")),
-		Shop:           strings.TrimSpace(r.FormValue("shop")),
-		ShiftRate:      strings.TrimSpace(r.FormValue("shift_rate")),
-		RevenuePercent: strings.TrimSpace(r.FormValue("revenue_percent")),
-	}
-
-	if form.Name == "" || form.Shop == "" {
-		form.Error = "Заполните имя и магазин"
+	form, emp, ok := h.parseEmployeeForm(r, employeeFormData{})
+	if !ok {
 		h.renderFormError(w, form)
 		return
 	}
 
-	shiftRate, err := strconv.ParseFloat(strings.Replace(form.ShiftRate, ",", ".", 1), 64)
-	if err != nil || shiftRate < 0 {
-		form.Error = "Укажите корректную ставку за смену"
-		h.renderFormError(w, form)
-		return
-	}
-
-	revenuePercent, err := strconv.ParseFloat(strings.Replace(form.RevenuePercent, ",", ".", 1), 64)
-	if err != nil || revenuePercent < 0 {
-		form.Error = "Укажите корректный процент от выручки"
-		h.renderFormError(w, form)
-		return
-	}
-
-	created, err := h.employeeStore.Create(r.Context(), employee.Employee{
-		Name:           form.Name,
-		Shop:           form.Shop,
-		ShiftRate:      shiftRate,
-		RevenuePercent: revenuePercent,
-	})
+	created, err := h.employeeStore.Create(r.Context(), emp)
 	if err != nil {
-		http.Error(w, "не удалось сохранить сотрудника", http.StatusInternalServerError)
+		form.Error = "Не удалось сохранить сотрудника. Попробуйте ещё раз."
+		h.renderFormError(w, form)
 		return
 	}
 
+	h.triggerDashboardRefresh(w)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := h.templates.ExecuteTemplate(w, "employees-card", created); err != nil {
 		http.Error(w, "ошибка отображения", http.StatusInternalServerError)
 	}
 }
 
+func (h *Handler) employeeEditForm(w http.ResponseWriter, r *http.Request) {
+	emp, err := h.loadEmployeeByParam(w, r)
+	if err != nil {
+		return
+	}
+
+	h.renderPartial(w, "employees-form", employeeFormData{
+		ID:             emp.ID,
+		IsEdit:         true,
+		Name:           emp.Name,
+		Shop:           emp.Shop,
+		ShiftRate:      strconv.FormatFloat(emp.ShiftRate, 'f', -1, 64),
+		RevenuePercent: strconv.FormatFloat(emp.RevenuePercent, 'f', -1, 64),
+	})
+}
+
+func (h *Handler) employeeUpdate(w http.ResponseWriter, r *http.Request) {
+	current, err := h.loadEmployeeByParam(w, r)
+	if err != nil {
+		return
+	}
+
+	base := employeeFormData{ID: current.ID, IsEdit: true}
+	form, emp, ok := h.parseEmployeeForm(r, base)
+	if !ok {
+		h.renderFormError(w, form)
+		return
+	}
+	emp.ID = current.ID
+
+	updated, err := h.employeeStore.Update(r.Context(), emp)
+	if err != nil {
+		form.Error = "Не удалось сохранить сотрудника. Попробуйте ещё раз."
+		h.renderFormError(w, form)
+		return
+	}
+
+	h.triggerDashboardRefresh(w)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := h.templates.ExecuteTemplate(w, "employees-card", updated); err != nil {
+		http.Error(w, "ошибка отображения", http.StatusInternalServerError)
+	}
+}
+
+func (h *Handler) employeeArchiveConfirm(w http.ResponseWriter, r *http.Request) {
+	emp, err := h.loadEmployeeByParam(w, r)
+	if err != nil {
+		return
+	}
+	h.renderPartial(w, "employee-archive-confirm", emp)
+}
+
+func (h *Handler) employeeArchive(w http.ResponseWriter, r *http.Request) {
+	emp, err := h.loadEmployeeByParam(w, r)
+	if err != nil {
+		return
+	}
+
+	if err := h.employeeStore.Archive(r.Context(), emp.ID); err != nil {
+		h.renderModalError(w, "Не удалось архивировать сотрудника. Попробуйте ещё раз.")
+		return
+	}
+
+	h.triggerDashboardRefresh(w)
+	w.WriteHeader(http.StatusOK)
+}
+
 func (h *Handler) employeeDetail(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	emp, err := h.loadEmployeeByParam(w, r)
 	if err != nil {
-		http.NotFound(w, r)
 		return
 	}
 
-	emp, err := h.employeeStore.GetByID(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, employee.ErrNotFound) {
-			http.NotFound(w, r)
-			return
-		}
-		http.Error(w, "не удалось загрузить сотрудника", http.StatusInternalServerError)
-		return
-	}
-
-	operations, err := h.operationStore.ListByEmployee(r.Context(), id)
+	operations, err := h.operationStore.ListByEmployee(r.Context(), emp.ID)
 	if err != nil {
 		http.Error(w, "не удалось загрузить операции", http.StatusInternalServerError)
 		return
@@ -147,22 +176,16 @@ func (h *Handler) employeeDetail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) employeeShiftNew(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	emp, err := h.loadEmployeeByParam(w, r)
 	if err != nil {
-		http.NotFound(w, r)
+		return
+	}
+	if emp.IsArchived() {
+		h.renderPageError(w, "Смены", "Архивному сотруднику нельзя добавить новую смену.")
 		return
 	}
 
-	if _, err := h.employeeStore.GetByID(r.Context(), id); err != nil {
-		if errors.Is(err, employee.ErrNotFound) {
-			http.NotFound(w, r)
-			return
-		}
-		http.Error(w, "не удалось загрузить сотрудника", http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, "/shifts?employee_id="+strconv.FormatInt(id, 10), http.StatusSeeOther)
+	http.Redirect(w, r, "/shifts?employee_id="+strconv.FormatInt(emp.ID, 10), http.StatusSeeOther)
 }
 
 func (h *Handler) renderPartial(w http.ResponseWriter, name string, data any) {
@@ -176,4 +199,61 @@ func (h *Handler) renderFormError(w http.ResponseWriter, form employeeFormData) 
 	w.Header().Set("HX-Retarget", "#modal-content")
 	w.Header().Set("HX-Reswap", "innerHTML")
 	h.renderPartial(w, "employees-form", form)
+}
+
+func (h *Handler) parseEmployeeForm(r *http.Request, base employeeFormData) (employeeFormData, employee.Employee, bool) {
+	if err := r.ParseForm(); err != nil {
+		base.Error = "Неверные данные формы"
+		return base, employee.Employee{}, false
+	}
+
+	form := base
+	form.Name = strings.TrimSpace(r.FormValue("name"))
+	form.Shop = strings.TrimSpace(r.FormValue("shop"))
+	form.ShiftRate = strings.TrimSpace(r.FormValue("shift_rate"))
+	form.RevenuePercent = strings.TrimSpace(r.FormValue("revenue_percent"))
+
+	if form.Name == "" || form.Shop == "" {
+		form.Error = "Заполните имя и магазин"
+		return form, employee.Employee{}, false
+	}
+
+	shiftRate, err := strconv.ParseFloat(strings.Replace(form.ShiftRate, ",", ".", 1), 64)
+	if err != nil || shiftRate < 0 {
+		form.Error = "Укажите корректную ставку за смену"
+		return form, employee.Employee{}, false
+	}
+
+	revenuePercent, err := strconv.ParseFloat(strings.Replace(form.RevenuePercent, ",", ".", 1), 64)
+	if err != nil || revenuePercent < 0 {
+		form.Error = "Укажите корректный процент от выручки"
+		return form, employee.Employee{}, false
+	}
+
+	return form, employee.Employee{
+		Name:           form.Name,
+		Shop:           form.Shop,
+		ShiftRate:      shiftRate,
+		RevenuePercent: revenuePercent,
+	}, true
+}
+
+func (h *Handler) loadEmployeeByParam(w http.ResponseWriter, r *http.Request) (employee.Employee, error) {
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.NotFound(w, r)
+		return employee.Employee{}, err
+	}
+
+	emp, err := h.employeeStore.GetByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, employee.ErrNotFound) {
+			http.NotFound(w, r)
+			return employee.Employee{}, err
+		}
+		http.Error(w, "не удалось загрузить сотрудника", http.StatusInternalServerError)
+		return employee.Employee{}, err
+	}
+
+	return emp, nil
 }

@@ -6,22 +6,37 @@
         <p class="dashboard-subtitle">Спокойный взгляд на команду и выплаты вашего магазина</p>
     </header>
 
-    <div class="dashboard-stats">
-        <article class="card stat-card stat-card-accent">
-            <span class="stat-label">{{template "icon-wallet"}}<span>К выплате</span></span>
-            <span class="stat-value">{{printf "%.0f" .TotalPay}} ₽</span>
-        </article>
-        <article class="card stat-card">
-            <span class="stat-label">{{template "icon-user-round"}}<span>Сотрудников</span></span>
-            <span class="stat-value">{{.EmployeeCount}}</span>
-        </article>
-    </div>
+    {{template "dashboard-summary" .}}
 
-    <a href="/employees" class="btn btn-primary btn-lg dashboard-cta">{{template "icon-plus"}}<span>Добавить операцию</span></a>
+    <button type="button"
+            class="btn btn-primary btn-lg dashboard-cta modal-trigger"
+            data-modal-title="Добавить операцию"
+            hx-get="/operations/form"
+            hx-target="#modal-content"
+            hx-swap="innerHTML">
+        {{template "icon-plus"}}<span>Добавить операцию</span>
+    </button>
 
     <section class="dashboard-recent" aria-labelledby="recent-title">
         <h2 id="recent-title" class="section-label">{{template "icon-chart-column"}}<span>Последние действия</span></h2>
         {{template "empty-accruals"}}
     </section>
+</div>
+{{end}}
+
+{{define "dashboard-summary"}}
+<div id="dashboard-summary"
+     class="dashboard-stats"
+     hx-get="/dashboard/summary"
+     hx-trigger="dashboard-refresh from:body"
+     hx-swap="outerHTML">
+    <article class="card stat-card stat-card-accent">
+        <span class="stat-label">{{template "icon-wallet"}}<span>К выплате</span></span>
+        <span class="stat-value">{{printf "%.0f" .TotalPay}} ₽</span>
+    </article>
+    <article class="card stat-card">
+        <span class="stat-label">{{template "icon-user-round"}}<span>Сотрудников</span></span>
+        <span class="stat-value">{{.EmployeeCount}}</span>
+    </article>
 </div>
 {{end}}

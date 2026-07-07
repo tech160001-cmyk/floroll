@@ -1,0 +1,433 @@
+{{define "payroll-content"}}
+<div class="page">
+    <header class="page-header">
+        <div class="page-header-text">
+            <p class="page-eyebrow">Финансы</p>
+            <h1 class="page-title">{{template "icon-wallet"}}<span>Зарплата</span></h1>
+        </div>
+    </header>
+
+    {{if .Employees}}
+    <form class="card payroll-form"
+          hx-get="/payroll/calculate"
+          hx-target="#payroll-result"
+          hx-swap="innerHTML"
+          hx-include=".payroll-form">
+        <h2 class="payroll-form-title">Параметры расчёта</h2>
+
+        <label class="field">
+            <span class="field-label">Сотрудник</span>
+            <select class="form-control" name="employee_id" required>
+                <option value="">— выберите —</option>
+                {{range .Employees}}
+                <option value="{{.ID}}" {{if eq $.Form.EmployeeID (printf "%d" .ID)}}selected{{end}}>{{.Name}} · {{.Shop}}</option>
+                {{end}}
+            </select>
+        </label>
+
+        <fieldset class="field payroll-period-picker">
+            <legend class="field-label">Период</legend>
+            <div class="payroll-period-picker__grid">
+                <label class="payroll-period-option">
+                    <input class="payroll-period-option__input"
+                           type="radio"
+                           name="period_preset"
+                           value="first_half"
+                           {{if eq .Form.PeriodPreset "first_half"}}checked{{end}}
+                           data-payroll-preset>
+                    <span class="payroll-period-option__label">1–15 число</span>
+                </label>
+                <label class="payroll-period-option">
+                    <input class="payroll-period-option__input"
+                           type="radio"
+                           name="period_preset"
+                           value="second_half"
+                           {{if eq .Form.PeriodPreset "second_half"}}checked{{end}}
+                           data-payroll-preset>
+                    <span class="payroll-period-option__label">16–конец месяца</span>
+                </label>
+                <label class="payroll-period-option">
+                    <input class="payroll-period-option__input"
+                           type="radio"
+                           name="period_preset"
+                           value="custom"
+                           {{if eq .Form.PeriodPreset "custom"}}checked{{end}}
+                           data-payroll-preset>
+                    <span class="payroll-period-option__label">Произвольный</span>
+                </label>
+            </div>
+        </fieldset>
+
+        <div class="payroll-period-month {{if eq .Form.PeriodPreset "custom"}}payroll-period-month--hidden{{end}}" data-payroll-month>
+            <label class="field">
+                <span class="field-label">Месяц</span>
+                <input class="form-control" type="month" name="period_month" value="{{.Form.PeriodMonth}}">
+            </label>
+        </div>
+
+        <div class="payroll-period-custom {{if ne .Form.PeriodPreset "custom"}}payroll-period-custom--hidden{{end}}" data-payroll-custom>
+            <div class="payroll-period-custom__grid">
+                <label class="field">
+                    <span class="field-label">С</span>
+                    <input class="form-control" type="date" name="period_from" value="{{.Form.PeriodFrom}}">
+                </label>
+                <label class="field">
+                    <span class="field-label">По</span>
+                    <input class="form-control" type="date" name="period_to" value="{{.Form.PeriodTo}}">
+                </label>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg payroll-form-submit">{{template "icon-chart-column"}}<span>Рассчитать</span></button>
+    </form>
+    {{else}}
+    {{template "empty-employees"}}
+    {{end}}
+
+    <div id="payroll-result" class="payroll-result-wrap">
+        {{template "payroll-result-empty"}}
+    </div>
+</div>
+
+<script>
+(function () {
+    function syncPeriodFields(form) {
+        var preset = form.querySelector('input[name="period_preset"]:checked');
+        var monthBlock = form.querySelector("[data-payroll-month]");
+        var customBlock = form.querySelector("[data-payroll-custom]");
+        if (!preset || !monthBlock || !customBlock) return;
+
+        var isCustom = preset.value === "custom";
+        monthBlock.classList.toggle("payroll-period-month--hidden", isCustom);
+        customBlock.classList.toggle("payroll-period-custom--hidden", !isCustom);
+    }
+
+    document.querySelectorAll("[data-payroll-preset]").forEach(function (input) {
+        input.addEventListener("change", function () {
+            syncPeriodFields(input.closest(".payroll-form"));
+        });
+    });
+})();
+</script>
+{{end}}
+
+{{define "payroll-result-empty"}}
+<article class="card empty-state-card empty-state-card--payroll">
+    <div class="empty-state-card__icon">{{template "icon-wallet"}}</div>
+    <h3 class="empty-state-card__title">Расчёт не выполнен</h3>
+    <p class="empty-state-card__text">Выберите сотрудника и период, затем нажмите «Рассчитать» — здесь появится платёжная ведомость.</p>
+</article>
+{{end}}
+
+{{define "payroll-result-error"}}
+<article class="card payroll-result-error flo-error-card">
+    <h3 class="flo-error-card__title">Не удалось выполнить действие</h3>
+    <p class="flo-error-card__text">{{.Error}}</p>
+</article>
+{{end}}
+
+{{define "app-error-card"}}
+<div class="page">
+    <article class="card flo-error-card">
+        <h1 class="flo-error-card__title">{{.Title}}</h1>
+        <p class="flo-error-card__text">{{.Message}}</p>
+    </article>
+</div>
+{{end}}
+
+{{define "action-error-card"}}
+<article class="flo-error-card flo-error-card--inline">
+    <h3 class="flo-error-card__title">{{.Title}}</h3>
+    <p class="flo-error-card__text">{{.Message}}</p>
+</article>
+{{end}}
+
+{{define "payroll-result-no-data"}}
+<article class="card empty-state-card empty-state-card--payroll empty-state-card--payroll-period">
+    <div class="empty-state-card__icon">{{template "icon-calendar-days"}}</div>
+    <h3 class="empty-state-card__title">Нет данных за период</h3>
+    <p class="empty-state-card__text">
+        У {{.Employee.Name}} нет смен и операций за {{.Period.Label}}.
+        Добавьте смены или операции, чтобы рассчитать зарплату.
+    </p>
+    <div class="empty-state-card__actions">
+        <a href="/shifts?employee_id={{.Employee.ID}}" class="btn btn-primary">{{template "icon-calendar-days"}}<span>Добавить смену</span></a>
+        <a href="/employees/{{.Employee.ID}}/operations" class="btn btn-secondary">{{template "icon-plus"}}<span>Добавить операцию</span></a>
+    </div>
+</article>
+{{end}}
+
+{{define "payroll-result"}}
+<article class="card payslip">
+    <header class="payslip-header">
+        <p class="payslip-header__eyebrow">Платёжная ведомость</p>
+        <h2 class="payslip-header__name">{{.Employee.Name}}</h2>
+        <p class="payslip-header__shop">{{.Employee.Shop}}</p>
+    </header>
+
+    <section class="payslip-period">
+        <p class="payslip-period__label">Период</p>
+        <p class="payslip-period__value">{{.Period.Label}}</p>
+    </section>
+
+    <section class="payroll-detail-block">
+        <div class="payroll-detail-block__header">
+            <h3 class="payroll-detail-block__title">Смены</h3>
+            <span class="payroll-detail-block__count">{{.ShiftCount}} {{shiftCountLabel .ShiftCount}}</span>
+        </div>
+        <div class="payroll-detail-list">
+            {{range .Shifts}}
+            <article class="payroll-detail-item">
+                <div class="payroll-detail-item__header">
+                    <span class="payroll-detail-item__date">{{.Date}}</span>
+                    <span class="payroll-detail-item__amount">{{printf "%.0f" .Payment}} ₽</span>
+                </div>
+                <p class="payroll-detail-item__meta">{{.Shop}}</p>
+                <dl class="payroll-detail-grid">
+                    <div>
+                        <dt>Личная выручка</dt>
+                        <dd>{{printf "%.0f" .Revenue}} ₽</dd>
+                    </div>
+                    <div>
+                        <dt>Ставка за смену</dt>
+                        <dd>{{printf "%.0f" .Payment}} ₽</dd>
+                    </div>
+                </dl>
+                {{if .Comment}}<p class="payroll-detail-item__comment">{{.Comment}}</p>{{end}}
+            </article>
+            {{else}}
+            <p class="payroll-detail-empty">За период нет смен.</p>
+            {{end}}
+        </div>
+    </section>
+
+    <section class="payroll-detail-block">
+        <div class="payroll-detail-block__header">
+            <h3 class="payroll-detail-block__title">Финансовые операции</h3>
+            <span class="payroll-detail-block__count">{{len .Operations}}</span>
+        </div>
+        <div class="payroll-detail-list">
+            {{range .Operations}}
+            <article class="payroll-detail-item payroll-detail-item--{{.Type.TimelineClass}}">
+                <div class="payroll-detail-item__header">
+                    <span class="payroll-detail-item__date">{{.Date}}</span>
+                    <span class="badge timeline-item-type timeline-item-type-{{.Type.TimelineClass}}">{{.Type.Label}}</span>
+                </div>
+                <dl class="payroll-detail-grid payroll-detail-grid--single">
+                    <div>
+                        <dt>Сумма</dt>
+                        <dd>{{printf "%.0f" .Amount}} ₽</dd>
+                    </div>
+                </dl>
+                {{if .Comment}}<p class="payroll-detail-item__comment">{{.Comment}}</p>{{end}}
+            </article>
+            {{else}}
+            <p class="payroll-detail-empty">За период нет финансовых операций.</p>
+            {{end}}
+        </div>
+    </section>
+
+    <section class="payslip-section">
+        <h3 class="payslip-section__title">Доход</h3>
+        <ul class="payslip-lines">
+            <li class="payslip-line">
+                <span class="payslip-line__bullet">•</span>
+                <span class="payslip-line__label">Оплата за смены</span>
+                <span class="payslip-line__leader" aria-hidden="true"></span>
+                <span class="payslip-line__amount payslip-line__amount--plus">+ {{printf "%.0f" .ShiftPay}} ₽</span>
+            </li>
+            <li class="payslip-line">
+                <span class="payslip-line__bullet">•</span>
+                <span class="payslip-line__label">Процент</span>
+                <span class="payslip-line__leader" aria-hidden="true"></span>
+                <span class="payslip-line__amount payslip-line__amount--plus">+ {{printf "%.0f" .RevenueBonus}} ₽</span>
+            </li>
+            <li class="payslip-line">
+                <span class="payslip-line__bullet">•</span>
+                <span class="payslip-line__label">Премии</span>
+                <span class="payslip-line__leader" aria-hidden="true"></span>
+                <span class="payslip-line__amount payslip-line__amount--plus">+ {{printf "%.0f" .BonusTotal}} ₽</span>
+            </li>
+        </ul>
+    </section>
+
+    <section class="payslip-section">
+        <h3 class="payslip-section__title payslip-section__title--deduction">Удержания</h3>
+        <ul class="payslip-lines">
+            <li class="payslip-line">
+                <span class="payslip-line__bullet">•</span>
+                <span class="payslip-line__label">Авансы</span>
+                <span class="payslip-line__leader" aria-hidden="true"></span>
+                <span class="payslip-line__amount payslip-line__amount--minus">− {{printf "%.0f" .AdvanceTotal}} ₽</span>
+            </li>
+            <li class="payslip-line">
+                <span class="payslip-line__bullet">•</span>
+                <span class="payslip-line__label">Штрафы</span>
+                <span class="payslip-line__leader" aria-hidden="true"></span>
+                <span class="payslip-line__amount payslip-line__amount--minus">− {{printf "%.0f" .FineTotal}} ₽</span>
+            </li>
+            <li class="payslip-line">
+                <span class="payslip-line__bullet">•</span>
+                <span class="payslip-line__label">Удержания за цветы</span>
+                <span class="payslip-line__leader" aria-hidden="true"></span>
+                <span class="payslip-line__amount payslip-line__amount--minus">− {{printf "%.0f" .FlowersTotal}} ₽</span>
+            </li>
+        </ul>
+    </section>
+
+    <footer class="payslip-total">
+        <p class="payslip-total__label">Итого к выплате</p>
+        <p class="payslip-total__value">{{printf "%.0f" .Total}} ₽</p>
+    </footer>
+
+    <section class="payslip-stats">
+        <div class="payslip-stat">
+            <span class="payslip-stat__label">Смен</span>
+            <span class="payslip-stat__value">{{.ShiftCount}}</span>
+        </div>
+        <div class="payslip-stat">
+            <span class="payslip-stat__label">Личная выручка</span>
+            <span class="payslip-stat__value">{{printf "%.0f" .TotalPersonalRevenue}} ₽</span>
+        </div>
+        <div class="payslip-stat">
+            <span class="payslip-stat__label">Выручка магазина</span>
+            <span class="payslip-stat__value">{{printf "%.0f" .TotalShopRevenue}} ₽</span>
+        </div>
+    </section>
+
+    {{if le .Total 0.0}}
+    <article class="flo-error-card flo-error-card--inline">
+        <h3 class="flo-error-card__title">Выплату нельзя подтвердить</h3>
+        <p class="flo-error-card__text">Итоговая сумма меньше или равна 0 ₽. Проверьте начисления и удержания, затем выполните расчёт ещё раз.</p>
+    </article>
+    {{else}}
+    <form class="payslip-confirm"
+          hx-post="/payroll/confirm"
+          hx-target="#payroll-result"
+          hx-swap="innerHTML"
+          hx-on::before-request="this.querySelector('button[type=submit]').disabled = true"
+          hx-on::after-request="this.querySelector('button[type=submit]').disabled = false"
+          hx-on::response-error="this.querySelector('button[type=submit]').disabled = false">
+        <input type="hidden" name="employee_id" value="{{.Employee.ID}}">
+        <input type="hidden" name="period_from" value="{{.Period.From}}">
+        <input type="hidden" name="period_to" value="{{.Period.To}}">
+        <input type="hidden" name="calculation_signature" value="{{.Signature}}">
+
+        <label class="field">
+            <span class="field-label">Комментарий к выплате <span class="field-label-optional">необязательно</span></span>
+            <input class="form-control"
+                   type="text"
+                   name="payment_comment"
+                   placeholder="Например: перевод на карту…"
+                   list="payment-comment-suggestions"
+                   autocomplete="off">
+            <datalist id="payment-comment-suggestions">
+                <option value="Перевод на карту">
+                <option value="Наличными">
+                <option value="Выдано частично">
+            </datalist>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-lg payslip-confirm__submit">{{template "icon-wallet"}}<span>Подтвердить выплату</span></button>
+    </form>
+    {{end}}
+</article>
+{{end}}
+
+{{define "payroll-result-already-paid"}}
+<article class="card payslip-status payslip-status--paid">
+    <div class="payslip-status__icon">{{template "icon-wallet"}}</div>
+    <h2 class="payslip-status__title">За этот период выплата уже произведена</h2>
+    <p class="payslip-status__meta">{{.Employee.Name}} · {{.Period.Label}}</p>
+
+    {{template "payroll-payment-breakdown" .Payment}}
+
+    <dl class="payslip-status__details">
+        <div class="payslip-status__detail">
+            <dt>Дата выплаты</dt>
+            <dd>{{formatPaymentDate .Payment.CreatedAt}}</dd>
+        </div>
+        <div class="payslip-status__detail">
+            <dt>Сумма</dt>
+            <dd>{{printf "%.0f" .Payment.Amount}} ₽</dd>
+        </div>
+        <div class="payslip-status__detail">
+            <dt>Комментарий</dt>
+            <dd>{{if .Payment.Comment}}{{.Payment.Comment}}{{else}}—{{end}}</dd>
+        </div>
+    </dl>
+</article>
+{{end}}
+
+{{define "payroll-result-confirmed"}}
+<article class="card payslip-status payslip-status--confirmed">
+    <div class="payslip-status__icon">{{template "icon-wallet"}}</div>
+    <h2 class="payslip-status__title">Выплата подтверждена</h2>
+    <p class="payslip-status__meta">{{.Employee.Name}} · {{.Period.Label}}</p>
+
+    {{template "payroll-payment-breakdown" .Payment}}
+
+    <dl class="payslip-status__details">
+        <div class="payslip-status__detail">
+            <dt>Дата выплаты</dt>
+            <dd>{{formatPaymentDate .Payment.CreatedAt}}</dd>
+        </div>
+        <div class="payslip-status__detail payslip-status__detail--accent">
+            <dt>Сумма</dt>
+            <dd>{{printf "%.0f" .Payment.Amount}} ₽</dd>
+        </div>
+        <div class="payslip-status__detail">
+            <dt>Комментарий</dt>
+            <dd>{{if .Payment.Comment}}{{.Payment.Comment}}{{else}}—{{end}}</dd>
+        </div>
+    </dl>
+</article>
+{{end}}
+
+{{define "payroll-payment-breakdown"}}
+<section class="payslip-section payslip-section--compact">
+    <h3 class="payslip-section__title">Доход</h3>
+    <ul class="payslip-lines">
+        <li class="payslip-line">
+            <span class="payslip-line__bullet">•</span>
+            <span class="payslip-line__label">Оплата за смены</span>
+            <span class="payslip-line__leader" aria-hidden="true"></span>
+            <span class="payslip-line__amount payslip-line__amount--plus">+ {{printf "%.0f" .Snapshot.ShiftPay}} ₽</span>
+        </li>
+        <li class="payslip-line">
+            <span class="payslip-line__bullet">•</span>
+            <span class="payslip-line__label">Процент</span>
+            <span class="payslip-line__leader" aria-hidden="true"></span>
+            <span class="payslip-line__amount payslip-line__amount--plus">+ {{printf "%.0f" .Snapshot.RevenueBonus}} ₽</span>
+        </li>
+        <li class="payslip-line">
+            <span class="payslip-line__bullet">•</span>
+            <span class="payslip-line__label">Премии</span>
+            <span class="payslip-line__leader" aria-hidden="true"></span>
+            <span class="payslip-line__amount payslip-line__amount--plus">+ {{printf "%.0f" .Snapshot.BonusTotal}} ₽</span>
+        </li>
+    </ul>
+
+    <h3 class="payslip-section__title payslip-section__title--deduction">Удержания</h3>
+    <ul class="payslip-lines">
+        <li class="payslip-line">
+            <span class="payslip-line__bullet">•</span>
+            <span class="payslip-line__label">Авансы</span>
+            <span class="payslip-line__leader" aria-hidden="true"></span>
+            <span class="payslip-line__amount payslip-line__amount--minus">− {{printf "%.0f" .Snapshot.AdvanceTotal}} ₽</span>
+        </li>
+        <li class="payslip-line">
+            <span class="payslip-line__bullet">•</span>
+            <span class="payslip-line__label">Штрафы</span>
+            <span class="payslip-line__leader" aria-hidden="true"></span>
+            <span class="payslip-line__amount payslip-line__amount--minus">− {{printf "%.0f" .Snapshot.FineTotal}} ₽</span>
+        </li>
+        <li class="payslip-line">
+            <span class="payslip-line__bullet">•</span>
+            <span class="payslip-line__label">Удержания за цветы</span>
+            <span class="payslip-line__leader" aria-hidden="true"></span>
+            <span class="payslip-line__amount payslip-line__amount--minus">− {{printf "%.0f" .Snapshot.FlowersTotal}} ₽</span>
+        </li>
+    </ul>
+</section>
+{{end}}

@@ -1,0 +1,2 @@
+-- Миграция выполняется из Go (addSoftArchiveColumnsIfNeeded):
+-- employees.archived_at, shifts.cancelled_at, operations.cancelled_at.

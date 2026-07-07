@@ -6,4 +6,9 @@ type Employee struct {
 	Shop           string
 	ShiftRate      float64
 	RevenuePercent float64
+	ArchivedAt     string
+}
+
+func (e Employee) IsArchived() bool {
+	return e.ArchivedAt != ""
 }

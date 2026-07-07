@@ -19,8 +19,9 @@ func NewStore(db *sql.DB) *Store {
 
 func (s *Store) List(ctx context.Context) ([]Employee, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, name, shop, shift_rate, revenue_percent
+		SELECT id, name, shop, shift_rate, revenue_percent, COALESCE(archived_at, '')
 		FROM employees
+		WHERE archived_at IS NULL
 		ORDER BY name
 	`)
 	if err != nil {
@@ -31,7 +32,7 @@ func (s *Store) List(ctx context.Context) ([]Employee, error) {
 	var employees []Employee
 	for rows.Next() {
 		var e Employee
-		if err := rows.Scan(&e.ID, &e.Name, &e.Shop, &e.ShiftRate, &e.RevenuePercent); err != nil {
+		if err := rows.Scan(&e.ID, &e.Name, &e.Shop, &e.ShiftRate, &e.RevenuePercent, &e.ArchivedAt); err != nil {
 			return nil, fmt.Errorf("scan employee: %w", err)
 		}
 		employees = append(employees, e)
@@ -42,7 +43,7 @@ func (s *Store) List(ctx context.Context) ([]Employee, error) {
 
 func (s *Store) Count(ctx context.Context) (int, error) {
 	var count int
-	err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM employees`).Scan(&count)
+	err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM employees WHERE archived_at IS NULL`).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("count employees: %w", err)
 	}
@@ -70,10 +71,10 @@ func (s *Store) Create(ctx context.Context, e Employee) (Employee, error) {
 func (s *Store) GetByID(ctx context.Context, id int64) (Employee, error) {
 	var e Employee
 	err := s.db.QueryRowContext(ctx, `
-		SELECT id, name, shop, shift_rate, revenue_percent
+		SELECT id, name, shop, shift_rate, revenue_percent, COALESCE(archived_at, '')
 		FROM employees
 		WHERE id = ?
-	`, id).Scan(&e.ID, &e.Name, &e.Shop, &e.ShiftRate, &e.RevenuePercent)
+	`, id).Scan(&e.ID, &e.Name, &e.Shop, &e.ShiftRate, &e.RevenuePercent, &e.ArchivedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Employee{}, ErrNotFound
@@ -82,4 +83,46 @@ func (s *Store) GetByID(ctx context.Context, id int64) (Employee, error) {
 	}
 
 	return e, nil
+}
+
+func (s *Store) Update(ctx context.Context, e Employee) (Employee, error) {
+	result, err := s.db.ExecContext(ctx, `
+		UPDATE employees
+		SET name = ?, shop = ?, shift_rate = ?, revenue_percent = ?
+		WHERE id = ?
+	`, e.Name, e.Shop, e.ShiftRate, e.RevenuePercent, e.ID)
+	if err != nil {
+		return Employee{}, fmt.Errorf("update employee: %w", err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return Employee{}, fmt.Errorf("rows affected: %w", err)
+	}
+	if affected == 0 {
+		return Employee{}, ErrNotFound
+	}
+
+	return s.GetByID(ctx, e.ID)
+}
+
+func (s *Store) Archive(ctx context.Context, id int64) error {
+	result, err := s.db.ExecContext(ctx, `
+		UPDATE employees
+		SET archived_at = datetime('now')
+		WHERE id = ? AND archived_at IS NULL
+	`, id)
+	if err != nil {
+		return fmt.Errorf("archive employee: %w", err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected: %w", err)
+	}
+	if affected == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }

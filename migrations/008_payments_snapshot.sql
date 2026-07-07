@@ -1,0 +1,2 @@
+-- Миграция выполняется из Go (addPaymentSnapshotIfNeeded):
+-- snapshot расчёта в payments.

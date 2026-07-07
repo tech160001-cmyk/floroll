@@ -1,0 +1,2 @@
+-- Миграция выполняется из Go (updateOperationTypesIfNeeded):
+-- op_type → operation_type, debt → flowers, добавление типа other.

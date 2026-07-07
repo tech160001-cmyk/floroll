@@ -26,9 +26,10 @@
 {{end}}
 
 {{define "employees-card"}}
-<article class="card employee-card">
+<article id="employee-{{.ID}}" class="card employee-card">
     <h2 class="employee-card-name">{{.Name}}</h2>
     <p class="employee-card-shop">{{.Shop}}</p>
+    {{if .IsArchived}}<span class="badge badge-soft">В архиве</span>{{end}}
 
     <dl class="employee-card-stats">
         <div class="employee-card-stat">
@@ -43,17 +44,42 @@
 
     <div class="employee-card-actions">
         <a href="/employees/{{.ID}}" class="btn btn-secondary employee-card-btn">Открыть</a>
+        {{if not .IsArchived}}
         <a href="/employees/{{.ID}}/shifts/new" class="btn btn-primary employee-card-btn">Добавить смену</a>
+        <button type="button"
+                class="btn btn-secondary employee-card-btn modal-trigger"
+                data-modal-title="Редактировать сотрудника"
+                hx-get="/employees/{{.ID}}/edit"
+                hx-target="#modal-content"
+                hx-swap="innerHTML">
+            Редактировать
+        </button>
+        <button type="button"
+                class="btn btn-danger employee-card-btn modal-trigger"
+                data-modal-title="Архивировать сотрудника"
+                hx-get="/employees/{{.ID}}/archive"
+                hx-target="#modal-content"
+                hx-swap="innerHTML">
+            Архивировать
+        </button>
+        {{end}}
     </div>
 </article>
 {{end}}
 
 {{define "employees-form"}}
 <form class="simple-form"
+      {{if .IsEdit}}
+      hx-post="/employees/{{.ID}}"
+      hx-target="#employee-{{.ID}}"
+      hx-swap="outerHTML"
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); }"
+      {{else}}
       hx-post="/employees"
       hx-target="#employee-list"
       hx-swap="beforeend"
-      hx-on::after-request="if(event.detail.successful) { Modal.close(); this.reset(); document.querySelector('.employee-cards-empty')?.remove(); }">
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); this.reset(); document.querySelector('.employee-cards-empty')?.remove(); }"
+      {{end}}>
     {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
 
     <label class="field">
@@ -80,6 +106,26 @@
 </form>
 {{end}}
 
+{{define "employee-archive-confirm"}}
+<form class="confirm-form"
+      hx-post="/employees/{{.ID}}/archive"
+      hx-target="#employee-{{.ID}}"
+      hx-swap="delete"
+      hx-on::after-request="if(event.detail.successful) { Modal.close(); }">
+    <div class="confirm-box">
+        <h3 class="confirm-title">Архивировать сотрудника?</h3>
+        <p class="confirm-text">
+            {{.Name}} больше не будет отображаться в основном списке и не будет доступен для новых смен и операций.
+            История смен, операций и выплат сохранится.
+        </p>
+    </div>
+    <div class="confirm-actions">
+        <button type="button" class="btn btn-secondary" data-modal-close>Отмена</button>
+        <button type="submit" class="btn btn-danger">Архивировать</button>
+    </div>
+</form>
+{{end}}
+
 {{define "employee-profile-content"}}
 <div class="page">
     <a href="/employees" class="back-link">← К сотрудникам</a>
@@ -87,6 +133,7 @@
     <header class="card employee-profile-header">
         <p class="page-eyebrow">Профиль</p>
         <h1 class="employee-profile-name">{{.Employee.Name}}</h1>
+        {{if .Employee.IsArchived}}<span class="badge badge-soft">В архиве</span>{{end}}
         <p class="employee-profile-shop">{{.Employee.Shop}}</p>
         <dl class="employee-profile-stats">
             <div class="employee-profile-stat">
@@ -111,6 +158,7 @@
         </div>
     </section>
 
+    {{if not .Employee.IsArchived}}
     <button type="button"
             class="btn btn-primary btn-lg employee-profile-action modal-trigger"
             data-modal-title="Добавить операцию"
@@ -119,6 +167,7 @@
             hx-swap="innerHTML">
         {{template "icon-plus"}}<span>Добавить операцию</span>
     </button>
+    {{end}}
 </div>
 {{end}}
 

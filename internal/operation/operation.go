@@ -3,48 +3,47 @@ package operation
 type Type string
 
 const (
-	TypeShift   Type = "shift"
-	TypeFine    Type = "fine"
 	TypeAdvance Type = "advance"
-	TypeDebt    Type = "debt"
+	TypeFine    Type = "fine"
+	TypeFlowers Type = "flowers"
 	TypeBonus   Type = "bonus"
+	TypeOther   Type = "other"
 )
+
+func FormTypes() []Type {
+	return []Type{
+		TypeAdvance,
+		TypeFine,
+		TypeFlowers,
+		TypeBonus,
+		TypeOther,
+	}
+}
 
 func (t Type) Label() string {
 	switch t {
-	case TypeShift:
-		return "Смена"
-	case TypeFine:
-		return "Штраф"
 	case TypeAdvance:
 		return "Аванс"
-	case TypeDebt:
-		return "Товар в долг"
+	case TypeFine:
+		return "Штраф"
+	case TypeFlowers, "debt":
+		return "Удержание за цветы"
 	case TypeBonus:
-		return "Бонус"
+		return "Премия"
+	case TypeOther:
+		return "Другое"
 	default:
 		return string(t)
 	}
 }
 
-func FormTypes() []Type {
-	return []Type{TypeFine, TypeAdvance, TypeDebt, TypeBonus}
-}
-
-type ShiftKind string
-
-const (
-	ShiftRegular    ShiftKind = "regular"
-	ShiftSubstitute ShiftKind = "substitute"
-)
-
-func (k ShiftKind) Label() string {
-	switch k {
-	case ShiftSubstitute:
-		return "Подработка"
-	default:
-		return "Обычная"
+func (t Type) IsFormType() bool {
+	for _, valid := range FormTypes() {
+		if t == valid {
+			return true
+		}
 	}
+	return false
 }
 
 type Operation struct {
@@ -55,11 +54,20 @@ type Operation struct {
 	Type         Type
 	Amount       float64
 	Comment      string
-	Shop         string
-	Revenue      float64
-	ShiftKind    ShiftKind
+	CancelledAt  string
 }
 
-func (o Operation) IsShift() bool {
-	return o.Type == TypeShift
+func (o Operation) IsCancelled() bool {
+	return o.CancelledAt != ""
+}
+
+func (t Type) TimelineClass() string {
+	switch t {
+	case TypeFlowers, "debt":
+		return "flowers"
+	case TypeAdvance, TypeFine, TypeBonus, TypeOther:
+		return string(t)
+	default:
+		return "other"
+	}
 }
