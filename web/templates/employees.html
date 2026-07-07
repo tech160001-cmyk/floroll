@@ -27,41 +27,46 @@
 
 {{define "employees-card"}}
 <article id="employee-{{.ID}}" class="card employee-card">
-    <h2 class="employee-card-name">{{.Name}}</h2>
-    <p class="employee-card-shop">{{.Shop}}</p>
-    {{if .IsArchived}}<span class="badge badge-soft">В архиве</span>{{end}}
+    <div class="employee-card__header">
+        <div class="employee-card__info">
+            <h2 class="employee-card-name">{{.Name}}</h2>
+            <p class="employee-card-shop">{{.Shop}}</p>
+        </div>
+        {{if .IsArchived}}<span class="badge badge-soft">В архиве</span>{{end}}
+    </div>
 
-    <dl class="employee-card-stats">
-        <div class="employee-card-stat">
-            <dt>Ставка</dt>
-            <dd>{{printf "%.0f" .ShiftRate}} ₽</dd>
-        </div>
-        <div class="employee-card-stat">
-            <dt>Процент</dt>
-            <dd>{{printf "%.1f" .RevenuePercent}}%</dd>
-        </div>
-    </dl>
+    <p class="employee-card-meta">
+        <span>Ставка <strong>{{printf "%.0f" .ShiftRate}} ₽</strong></span>
+        <span class="employee-card-meta__sep" aria-hidden="true">·</span>
+        <span>Процент <strong>{{printf "%.1f" .RevenuePercent}}%</strong></span>
+    </p>
 
     <div class="employee-card-actions">
-        <a href="/employees/{{.ID}}" class="btn btn-secondary employee-card-btn">Открыть</a>
         {{if not .IsArchived}}
-        <a href="/employees/{{.ID}}/shifts/new" class="btn btn-primary employee-card-btn">Добавить смену</a>
-        <button type="button"
-                class="btn btn-secondary employee-card-btn modal-trigger"
-                data-modal-title="Редактировать сотрудника"
-                hx-get="/employees/{{.ID}}/edit"
-                hx-target="#modal-content"
-                hx-swap="innerHTML">
-            Редактировать
-        </button>
-        <button type="button"
-                class="btn btn-danger employee-card-btn modal-trigger"
-                data-modal-title="Архивировать сотрудника"
-                hx-get="/employees/{{.ID}}/archive"
-                hx-target="#modal-content"
-                hx-swap="innerHTML">
-            Архивировать
-        </button>
+        <a href="/employees/{{.ID}}/shifts/new" class="btn btn-primary employee-card-btn employee-card-btn--primary">{{template "icon-plus"}}<span>Добавить смену</span></a>
+        <div class="employee-card-actions__secondary">
+            <a href="/employees/{{.ID}}" class="btn btn-secondary btn-sm">Открыть</a>
+            <button type="button"
+                    class="btn btn-ghost btn-sm modal-trigger"
+                    data-modal-title="Редактировать сотрудника"
+                    hx-get="/employees/{{.ID}}/edit"
+                    hx-target="#modal-content"
+                    hx-swap="innerHTML">
+                Редактировать
+            </button>
+            <button type="button"
+                    class="btn btn-danger btn-sm modal-trigger"
+                    data-modal-title="Архивировать сотрудника"
+                    hx-get="/employees/{{.ID}}/archive"
+                    hx-target="#modal-content"
+                    hx-swap="innerHTML">
+                Архивировать
+            </button>
+        </div>
+        {{else}}
+        <div class="employee-card-actions__secondary">
+            <a href="/employees/{{.ID}}" class="btn btn-secondary btn-sm">Открыть</a>
+        </div>
         {{end}}
     </div>
 </article>

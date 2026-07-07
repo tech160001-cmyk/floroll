@@ -1,21 +1,24 @@
 {{define "home-content"}}
 <div class="dashboard">
     <header class="dashboard-hero">
-        <p class="dashboard-eyebrow">FloRoll</p>
-        <h1 class="dashboard-title">Обзор на сегодня</h1>
-        <p class="dashboard-subtitle">Спокойный взгляд на команду и выплаты вашего магазина</p>
+        <div class="dashboard-hero__text">
+            <p class="dashboard-eyebrow">FloRoll</p>
+            <h1 class="dashboard-title">Обзор на сегодня</h1>
+            <p class="dashboard-subtitle">Команда, смены и выплаты вашего магазина</p>
+        </div>
+        <div class="dashboard-toolbar">
+            <button type="button"
+                    class="btn btn-primary btn-add modal-trigger"
+                    data-modal-title="Добавить операцию"
+                    hx-get="/operations/form"
+                    hx-target="#modal-content"
+                    hx-swap="innerHTML">
+                {{template "icon-plus"}}<span>Добавить операцию</span>
+            </button>
+        </div>
     </header>
 
     {{template "dashboard-summary" .}}
-
-    <button type="button"
-            class="btn btn-primary btn-lg dashboard-cta modal-trigger"
-            data-modal-title="Добавить операцию"
-            hx-get="/operations/form"
-            hx-target="#modal-content"
-            hx-swap="innerHTML">
-        {{template "icon-plus"}}<span>Добавить операцию</span>
-    </button>
 
     <section class="dashboard-recent" aria-labelledby="recent-title">
         <h2 id="recent-title" class="section-label">{{template "icon-chart-column"}}<span>Последние действия</span></h2>
@@ -30,13 +33,33 @@
      hx-get="/dashboard/summary"
      hx-trigger="dashboard-refresh from:body"
      hx-swap="outerHTML">
-    <article class="card stat-card stat-card-accent">
+    <article class="card stat-card stat-card-accent card--interactive">
         <span class="stat-label">{{template "icon-wallet"}}<span>К выплате</span></span>
         <span class="stat-value">{{printf "%.0f" .TotalPay}} ₽</span>
     </article>
-    <article class="card stat-card">
+    <article class="card stat-card card--interactive">
         <span class="stat-label">{{template "icon-user-round"}}<span>Сотрудников</span></span>
         <span class="stat-value">{{.EmployeeCount}}</span>
+    </article>
+    <article class="card stat-card stat-card--placeholder" aria-label="Скоро: выплаты сегодня">
+        <span class="stat-label">{{template "icon-wallet"}}<span>Выплаты сегодня</span></span>
+        <span class="stat-value">—</span>
+        <span class="stat-card__hint">Скоро</span>
+    </article>
+    <article class="card stat-card stat-card--placeholder" aria-label="Скоро: смены сегодня">
+        <span class="stat-label">{{template "icon-calendar-days"}}<span>Смены сегодня</span></span>
+        <span class="stat-value">—</span>
+        <span class="stat-card__hint">Скоро</span>
+    </article>
+    <article class="card stat-card stat-card--placeholder" aria-label="Скоро: операции">
+        <span class="stat-label">{{template "icon-chart-column"}}<span>Операции</span></span>
+        <span class="stat-value">—</span>
+        <span class="stat-card__hint">Скоро</span>
+    </article>
+    <article class="card stat-card stat-card--placeholder" aria-label="Скоро: ближайшая выплата">
+        <span class="stat-label">{{template "icon-wallet"}}<span>Ближайшая выплата</span></span>
+        <span class="stat-value">—</span>
+        <span class="stat-card__hint">Скоро</span>
     </article>
 </div>
 {{end}}

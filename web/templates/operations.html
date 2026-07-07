@@ -3,18 +3,17 @@
     <a href="/employees/{{.Employee.ID}}" class="back-link">← К профилю</a>
 
     <article class="card employee-card employee-card-compact">
-        <h2 class="employee-card-name">{{.Employee.Name}}</h2>
-        <p class="employee-card-shop">{{.Employee.Shop}}</p>
-        <dl class="employee-card-stats">
-            <div class="employee-card-stat">
-                <dt>Ставка</dt>
-                <dd>{{printf "%.0f" .Employee.ShiftRate}} ₽</dd>
+        <div class="employee-card__header">
+            <div class="employee-card__info">
+                <h2 class="employee-card-name">{{.Employee.Name}}</h2>
+                <p class="employee-card-shop">{{.Employee.Shop}}</p>
             </div>
-            <div class="employee-card-stat">
-                <dt>Процент</dt>
-                <dd>{{printf "%.1f" .Employee.RevenuePercent}}%</dd>
-            </div>
-        </dl>
+        </div>
+        <p class="employee-card-meta">
+            <span>Ставка <strong>{{printf "%.0f" .Employee.ShiftRate}} ₽</strong></span>
+            <span class="employee-card-meta__sep" aria-hidden="true">·</span>
+            <span>Процент <strong>{{printf "%.1f" .Employee.RevenuePercent}}%</strong></span>
+        </p>
     </article>
 
     <header class="page-header operations-header">
@@ -71,14 +70,15 @@
 <article id="operation-{{.ID}}" class="card timeline-item timeline-item-{{.Type.TimelineClass}}">
     <div class="timeline-item-header">
         <span class="timeline-item-date">{{.Date}}</span>
-        <span class="badge timeline-item-type timeline-item-type-{{.Type.TimelineClass}}">{{.Type.Label}}</span>
+        <div class="timeline-item-header__right">
+            <span class="timeline-item-amount">{{printf "%.0f" .Amount}} ₽</span>
+            <span class="badge timeline-item-type timeline-item-type-{{.Type.TimelineClass}}">{{.Type.Label}}</span>
+        </div>
     </div>
-
-    <p class="timeline-item-amount">{{printf "%.0f" .Amount}} ₽</p>
     {{if .Comment}}<p class="timeline-item-comment">{{.Comment}}</p>{{end}}
     <div class="entity-actions">
         <button type="button"
-                class="btn btn-secondary btn-sm modal-trigger"
+                class="btn btn-ghost btn-sm modal-trigger"
                 data-modal-title="Редактировать операцию"
                 hx-get="/operations/{{.ID}}/edit"
                 hx-target="#modal-content"

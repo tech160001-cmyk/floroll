@@ -1,15 +1,17 @@
 {{define "empty-employees"}}
 <article class="card empty-state-card empty-state-card--employees employee-cards-empty">
     <div class="empty-state-card__icon">{{template "icon-user-round"}}</div>
-    <h3 class="empty-state-card__title">Нет сотрудников</h3>
-    <p class="empty-state-card__text">Добавьте первого сотрудника, чтобы начать вести смены и операции.</p>
+    <div class="empty-state-card__body">
+        <h3 class="empty-state-card__title">Нет сотрудников</h3>
+        <p class="empty-state-card__text">Добавьте первого сотрудника, чтобы начать вести смены и операции.</p>
+    </div>
     <button type="button"
             class="btn btn-primary modal-trigger"
             data-modal-title="Добавить сотрудника"
             hx-get="/employees/form"
             hx-target="#modal-content"
             hx-swap="innerHTML">
-        {{template "icon-plus"}}<span>Добавить сотрудника</span>
+        {{template "icon-plus"}}<span>Добавить</span>
     </button>
 </article>
 {{end}}
@@ -17,15 +19,17 @@
 {{define "empty-shifts"}}
 <article class="card empty-state-card empty-state-card--shifts shift-list-empty">
     <div class="empty-state-card__icon">{{template "icon-calendar-days"}}</div>
-    <h3 class="empty-state-card__title">Нет смен</h3>
-    <p class="empty-state-card__text">Здесь появятся смены команды — обычные и подработки.</p>
+    <div class="empty-state-card__body">
+        <h3 class="empty-state-card__title">Нет смен</h3>
+        <p class="empty-state-card__text">Здесь появятся смены команды.</p>
+    </div>
     <button type="button"
             class="btn btn-primary modal-trigger"
             data-modal-title="Добавить смену"
             hx-get="/shifts/form"
             hx-target="#modal-content"
             hx-swap="innerHTML">
-        {{template "icon-plus"}}<span>Добавить смену</span>
+        {{template "icon-plus"}}<span>Добавить</span>
     </button>
 </article>
 {{end}}
@@ -33,24 +37,28 @@
 {{define "empty-operations"}}
 <article class="card empty-state-card empty-state-card--operations timeline-empty">
     <div class="empty-state-card__icon">{{template "icon-chart-column"}}</div>
-    <h3 class="empty-state-card__title">Нет операций</h3>
-    <p class="empty-state-card__text">Фиксируйте авансы, штрафы, удержания за цветы и другие операции.</p>
+    <div class="empty-state-card__body">
+        <h3 class="empty-state-card__title">Нет операций</h3>
+        <p class="empty-state-card__text">Фиксируйте авансы, штрафы, удержания и премии.</p>
+    </div>
     <button type="button"
             class="btn btn-primary modal-trigger"
             data-modal-title="Добавить операцию"
             hx-get="/employees/{{.ID}}/operations/form"
             hx-target="#modal-content"
             hx-swap="innerHTML">
-        {{template "icon-plus"}}<span>Добавить операцию</span>
+        {{template "icon-plus"}}<span>Добавить</span>
     </button>
 </article>
 {{end}}
 
 {{define "empty-accruals"}}
-<article class="card empty-state-card empty-state-card--accruals">
+<article class="card empty-state-card empty-state-card--accruals empty-state-card--compact">
     <div class="empty-state-card__icon">{{template "icon-wallet"}}</div>
-    <h3 class="empty-state-card__title">Нет начислений</h3>
-    <p class="empty-state-card__text">Начисления и выплаты появятся после первых смен и операций.</p>
-    <a href="/payroll" class="btn btn-primary">{{template "icon-wallet"}}<span>Перейти к зарплате</span></a>
+    <div class="empty-state-card__body">
+        <h3 class="empty-state-card__title">Нет начислений</h3>
+        <p class="empty-state-card__text">Начисления появятся после первых смен и операций.</p>
+    </div>
+    <a href="/payroll" class="btn btn-secondary btn-sm">{{template "icon-wallet"}}<span>К зарплате</span></a>
 </article>
 {{end}}

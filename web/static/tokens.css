@@ -1,0 +1,112 @@
+/* FloRoll design tokens */
+
+:root {
+  /* Brand colors */
+  --color-bg: #F7F6F2;
+  --color-surface: #FFFFFF;
+  --color-green: #2F6B4F;
+  --color-green-hover: #265a42;
+  --color-green-active: #1f4a36;
+  --color-green-light: #DCECDD;
+  --color-accent: #6EA883;
+  --color-text: #1E1E1E;
+  --color-text-muted: #667085;
+  --color-border: rgba(47, 107, 79, 0.12);
+  --color-border-strong: rgba(47, 107, 79, 0.2);
+  --color-surface-muted: color-mix(in srgb, var(--color-bg) 70%, var(--color-green-light));
+  --color-placeholder: #98A2B3;
+  --border-subtle: var(--color-border);
+
+  /* Operation tones */
+  --op-shift-bg: #E8F3EC;
+  --op-shift-border: #B8D4C4;
+  --op-shift-accent: #2F6B4F;
+  --op-fine-bg: #F9EBEB;
+  --op-fine-border: #E8C4C4;
+  --op-fine-accent: #8B5A5A;
+  --op-advance-bg: #EEF2FA;
+  --op-advance-border: #C5D0E8;
+  --op-advance-accent: #4A5F8C;
+  --op-flowers-bg: #F5F0E8;
+  --op-flowers-border: #DDD0BC;
+  --op-flowers-accent: #7A6B52;
+  --op-bonus-bg: #F0F4E8;
+  --op-bonus-border: #D4DFC0;
+  --op-bonus-accent: #5A6B42;
+  --op-other-bg: #F3F0F5;
+  --op-other-border: #D8CDDF;
+  --op-other-accent: #6B5A7A;
+  --op-substitute-bg: #F3EDF8;
+  --op-substitute-border: #D4C8E4;
+  --op-substitute-accent: #6B5A7A;
+
+  /* Spacing scale (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+
+  /* Legacy aliases */
+  --space-xs: var(--space-2);
+  --space-sm: var(--space-3);
+  --space-md: var(--space-4);
+  --space-lg: var(--space-5);
+  --space-xl: var(--space-6);
+  --space-2xl: var(--space-8);
+  --space-3xl: var(--space-10);
+
+  /* Typography */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-card: var(--radius-lg);
+  --radius-btn: var(--radius-md);
+  --radius-control: var(--radius-md);
+  --radius-badge: 999px;
+
+  /* Controls */
+  --control-height: 40px;
+  --control-height-touch: 44px;
+  --btn-height: 36px;
+  --btn-height-sm: 32px;
+  --btn-height-lg: 44px;
+  --card-padding: var(--space-4) var(--space-5);
+
+  /* Layout */
+  --container-max: 1440px;
+  --header-height: 56px;
+  --font: "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Shadows */
+  --shadow-soft: 0 2px 8px rgba(30, 30, 30, 0.05);
+  --shadow-soft-hover: 0 4px 16px rgba(30, 30, 30, 0.08);
+  --shadow-header: 0 1px 0 var(--color-border);
+  --shadow-nav-active: 0 1px 4px rgba(47, 107, 79, 0.1);
+  --shadow-btn-hover: 0 2px 8px rgba(47, 107, 79, 0.15);
+  --shadow-control-focus: 0 0 0 3px rgba(47, 107, 79, 0.14);
+
+  /* Motion */
+  --transition: 180ms ease;
+  --transition-fast: 150ms ease;
+  --transition-slow: 220ms ease;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --control-height: var(--control-height-touch);
+  }
+}

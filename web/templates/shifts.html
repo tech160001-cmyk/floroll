@@ -38,27 +38,19 @@ document.addEventListener("DOMContentLoaded", function () {
 {{end}}
 
 {{define "shifts-row"}}
-<article id="shift-{{.ID}}" class="card shift-card">
-    <div class="shift-card-header">
-        <span class="shift-card-date">{{.Date}}</span>
-        <span class="badge badge-soft shift-card-payment">{{printf "%.0f" .Payment}} ₽</span>
+<article id="shift-{{.ID}}" class="card shift-card shift-card--compact">
+    <div class="shift-card__main">
+        <div class="shift-card__top">
+            <span class="shift-card-date">{{.Date}}</span>
+            <span class="badge badge-soft shift-card-payment">{{printf "%.0f" .Payment}} ₽</span>
+        </div>
+        <h2 class="shift-card-name">{{.EmployeeName}}</h2>
+        <p class="shift-card-meta">{{.Shop}} · Личная {{printf "%.0f" .Revenue}} ₽ · Магазин {{printf "%.0f" .ShopRevenue}} ₽</p>
+        {{if .Comment}}<p class="shift-card-comment">{{.Comment}}</p>{{end}}
     </div>
-    <h2 class="shift-card-name">{{.EmployeeName}}</h2>
-    <p class="shift-card-shop">{{.Shop}}</p>
-    <dl class="shift-card-stats">
-        <div class="shift-card-stat">
-            <dt>Личная выручка</dt>
-            <dd>{{printf "%.0f" .Revenue}} ₽</dd>
-        </div>
-        <div class="shift-card-stat">
-            <dt>Выручка магазина</dt>
-            <dd>{{printf "%.0f" .ShopRevenue}} ₽</dd>
-        </div>
-    </dl>
-    {{if .Comment}}<p class="shift-card-comment">{{.Comment}}</p>{{end}}
-    <div class="entity-actions">
+    <div class="entity-actions shift-card__actions">
         <button type="button"
-                class="btn btn-secondary btn-sm modal-trigger"
+                class="btn btn-ghost btn-sm modal-trigger"
                 data-modal-title="Редактировать смену"
                 hx-get="/shifts/{{.ID}}/edit"
                 hx-target="#modal-content"
