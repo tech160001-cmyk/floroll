@@ -1,17 +1,37 @@
 /* Cards, badges, empty states, entity actions */
 
 .card {
-  background: var(--color-surface);
+  position: relative;
+  overflow: clip;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(255, 253, 248, 0.92)),
+    var(--color-surface);
   border-radius: var(--radius-card);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-soft);
   padding: var(--card-padding);
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: -2.25rem;
+  right: -2.75rem;
+  width: 7rem;
+  height: 7rem;
+  border: 1px solid var(--color-botanical-line);
+  border-left: 0;
+  border-bottom: 0;
+  border-radius: 50%;
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .card--interactive:hover {
   box-shadow: var(--shadow-soft-hover);
   border-color: var(--color-border-strong);
+  transform: translateY(-1px);
 }
 
 .badge {
@@ -22,12 +42,13 @@
   font-weight: 600;
   line-height: 1.3;
   border-radius: var(--radius-badge);
+  border: 1px solid rgba(255, 255, 255, 0.52);
 }
 
 .badge-soft {
-  background: var(--color-green-light);
+  background: color-mix(in srgb, var(--color-green-light) 80%, var(--color-cream));
   color: var(--color-green);
-  border: 1px solid transparent;
+  border-color: var(--color-border);
 }
 
 /* Stat cards */
@@ -37,16 +58,18 @@
   flex-direction: column;
   justify-content: center;
   gap: var(--space-1);
-  min-height: 72px;
+  min-height: 68px;
   padding: var(--space-3) var(--space-4);
 }
 
 .stat-card-accent {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--color-green) 0%, var(--color-accent) 100%);
+  background:
+    radial-gradient(circle at 92% 10%, rgba(255, 249, 239, 0.2) 0, transparent 5.75rem),
+    linear-gradient(135deg, var(--color-green) 0%, #5E8B68 100%);
   border-color: transparent;
-  box-shadow: 0 2px 12px rgba(47, 107, 79, 0.2);
+  box-shadow: 0 16px 34px rgba(49, 95, 75, 0.18);
 }
 
 .stat-card-accent::after {
@@ -61,10 +84,10 @@
 }
 
 .stat-card--placeholder {
-  background: var(--color-bg);
+  background: linear-gradient(145deg, rgba(255, 249, 239, 0.9), rgba(246, 238, 224, 0.62));
   border-style: dashed;
   border-color: var(--color-border-strong);
-  opacity: 0.85;
+  opacity: 0.9;
   align-items: flex-start;
   justify-content: flex-start;
 }
@@ -154,7 +177,9 @@
 }
 
 .empty-state-card--employees {
-  background: linear-gradient(165deg, var(--color-green-light) 0%, var(--color-surface) 72%);
+  background:
+    radial-gradient(circle at 94% 8%, rgba(244, 222, 217, 0.44) 0, transparent 8rem),
+    linear-gradient(165deg, var(--color-green-light) 0%, var(--color-surface) 72%);
   border-color: var(--color-border);
 }
 
@@ -169,12 +194,12 @@
 }
 
 .empty-state-card--accruals {
-  background: var(--color-surface);
+  background: linear-gradient(145deg, var(--color-surface), color-mix(in srgb, var(--color-beige) 30%, var(--color-surface)));
   border-color: var(--color-border);
 }
 
 .empty-state-card--payroll {
-  background: var(--color-surface);
+  background: linear-gradient(145deg, var(--color-surface), color-mix(in srgb, var(--color-sage) 26%, var(--color-surface)));
   border-color: var(--color-border);
 }
 
@@ -197,11 +222,12 @@
   justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 253, 248, 0.82);
   box-shadow: var(--shadow-soft);
   color: var(--color-green);
   flex-shrink: 0;
+  border: 1px solid var(--color-border);
 }
 
 .empty-state-card__icon .icon {

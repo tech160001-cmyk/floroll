@@ -13,6 +13,9 @@
 .payment-card {
   padding: 0;
   overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(244, 222, 217, 0.38) 0, transparent 7rem),
+    var(--color-surface);
 }
 
 .payment-card__summary {
@@ -78,6 +81,7 @@
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-badge);
   color: var(--color-green);
+  background: rgba(255, 253, 248, 0.62);
   font-size: var(--text-sm);
   font-weight: 600;
   white-space: nowrap;
@@ -85,12 +89,12 @@
 }
 
 .payment-card__summary:hover .payment-card__toggle {
-  background: var(--color-green-light);
+  background: color-mix(in srgb, var(--color-green-light) 74%, var(--color-cream));
   border-color: var(--color-accent);
 }
 
 .payment-card[open] .payment-card__toggle {
-  background: var(--color-green-light);
+  background: color-mix(in srgb, var(--color-green-light) 74%, var(--color-cream));
   border-color: var(--color-accent);
 }
 
@@ -109,6 +113,7 @@
 .payment-card__body {
   padding: 0 var(--space-5) var(--space-5);
   border-top: 1px solid var(--color-border);
+  background: linear-gradient(180deg, rgba(255, 249, 239, 0.34), transparent);
 }
 
 .payment-card__details {
@@ -120,8 +125,9 @@
 
 .payment-card__details div {
   padding: var(--space-3);
-  background: var(--color-bg);
+  background: color-mix(in srgb, var(--color-cream) 76%, var(--color-surface));
   border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
 }
 
 .payment-card__details dt {

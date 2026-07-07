@@ -17,7 +17,7 @@
   text-decoration: none;
   white-space: nowrap;
   transition: background var(--transition), color var(--transition), border-color var(--transition),
-    box-shadow var(--transition);
+    box-shadow var(--transition), transform var(--transition);
 }
 
 .btn:focus-visible {
@@ -26,15 +26,17 @@
 }
 
 .btn-primary {
-  background: var(--color-green);
+  background: linear-gradient(135deg, var(--color-green), #5E8B68);
   color: #fff;
   border-color: var(--color-green);
+  box-shadow: 0 8px 18px rgba(49, 95, 75, 0.14);
 }
 
 .btn-primary:hover {
-  background: var(--color-green-hover);
+  background: linear-gradient(135deg, var(--color-green-hover), #557F60);
   border-color: var(--color-green-hover);
   box-shadow: var(--shadow-btn-hover);
+  transform: translateY(-1px);
 }
 
 .btn-primary:active {
@@ -42,18 +44,20 @@
 }
 
 .btn-secondary {
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 86%, var(--color-cream));
   color: var(--color-green);
   border-color: var(--color-border-strong);
 }
 
 .btn-secondary:hover {
-  background: var(--color-green-light);
+  background: color-mix(in srgb, var(--color-green-light) 72%, var(--color-cream));
   border-color: var(--color-accent);
+  box-shadow: 0 8px 18px rgba(75, 62, 43, 0.06);
+  transform: translateY(-1px);
 }
 
 .btn-danger {
-  background: var(--op-fine-bg);
+  background: color-mix(in srgb, var(--op-fine-bg) 84%, var(--color-surface));
   color: var(--op-fine-accent);
   border-color: var(--op-fine-border);
 }
@@ -73,7 +77,7 @@
 
 .btn-ghost:hover {
   color: var(--color-green);
-  background: var(--color-green-light);
+  background: color-mix(in srgb, var(--color-green-light) 66%, transparent);
 }
 
 .btn-sm {

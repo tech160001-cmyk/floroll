@@ -29,9 +29,9 @@
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(30, 30, 30, 0.35);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(39, 36, 31, 0.28);
+  backdrop-filter: blur(9px) saturate(1.04);
+  -webkit-backdrop-filter: blur(9px) saturate(1.04);
 }
 
 .modal-dialog {
@@ -42,9 +42,11 @@
   max-height: calc(100vh - var(--space-8));
   overflow: auto;
   padding: var(--space-5);
-  background: var(--color-surface);
+  background:
+    radial-gradient(circle at 95% 0%, rgba(244, 222, 217, 0.38) 0, transparent 8rem),
+    var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-soft-hover);
   opacity: 0;
   transform: translateY(8px);
@@ -68,7 +70,7 @@
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-badge);
-  background: var(--color-surface);
+  background: rgba(255, 253, 248, 0.82);
   color: var(--color-text-muted);
   cursor: pointer;
   transition: color var(--transition), background var(--transition), border-color var(--transition);
@@ -76,7 +78,7 @@
 
 .modal-close:hover {
   color: var(--color-green);
-  background: var(--color-green-light);
+  background: color-mix(in srgb, var(--color-green-light) 72%, var(--color-cream));
   border-color: var(--color-border-strong);
 }
 
@@ -183,12 +185,12 @@ body.modal-open {
 
 .timeline-item {
   padding: var(--space-3) var(--space-4);
-  border-left-width: 3px;
+  border-left-width: 2px;
   border-left-style: solid;
 }
 
 .timeline-item-shift {
-  background: var(--op-shift-bg);
+  background: linear-gradient(135deg, var(--op-shift-bg), color-mix(in srgb, var(--color-surface) 82%, var(--op-shift-bg)));
   border-left-color: var(--op-shift-accent);
 }
 
@@ -198,12 +200,12 @@ body.modal-open {
 }
 
 .timeline-item-fine {
-  background: var(--op-fine-bg);
+  background: linear-gradient(135deg, var(--op-fine-bg), color-mix(in srgb, var(--color-surface) 82%, var(--op-fine-bg)));
   border-left-color: var(--op-fine-accent);
 }
 
 .timeline-item-advance {
-  background: var(--op-advance-bg);
+  background: linear-gradient(135deg, var(--op-advance-bg), color-mix(in srgb, var(--color-surface) 82%, var(--op-advance-bg)));
   border-left-color: var(--op-advance-accent);
 }
 
@@ -214,7 +216,7 @@ body.modal-open {
 }
 
 .timeline-item-flowers {
-  background: var(--op-flowers-bg);
+  background: linear-gradient(135deg, var(--op-flowers-bg), color-mix(in srgb, var(--color-surface) 82%, var(--op-flowers-bg)));
   border-left-color: var(--op-flowers-accent);
 }
 
@@ -225,7 +227,7 @@ body.modal-open {
 }
 
 .timeline-item-bonus {
-  background: var(--op-bonus-bg);
+  background: linear-gradient(135deg, var(--op-bonus-bg), color-mix(in srgb, var(--color-surface) 82%, var(--op-bonus-bg)));
   border-left-color: var(--op-bonus-accent);
 }
 
@@ -236,7 +238,7 @@ body.modal-open {
 }
 
 .timeline-item-other {
-  background: var(--op-other-bg);
+  background: linear-gradient(135deg, var(--op-other-bg), color-mix(in srgb, var(--color-surface) 82%, var(--op-other-bg)));
   border-left-color: var(--op-other-accent);
 }
 
@@ -312,6 +314,9 @@ body.modal-open {
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
+  background:
+    radial-gradient(circle at 98% 0%, rgba(220, 233, 221, 0.42) 0, transparent 6rem),
+    var(--color-surface);
 }
 
 @media (min-width: 768px) {

@@ -21,10 +21,47 @@ body {
   font-size: var(--text-md);
   line-height: 1.5;
   color: var(--color-text);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(244, 222, 217, 0.45) 0, transparent 26rem),
+    radial-gradient(circle at 92% 8%, rgba(220, 233, 221, 0.58) 0, transparent 24rem),
+    linear-gradient(135deg, rgba(255, 249, 239, 0.88), rgba(248, 243, 234, 0.96) 44%, rgba(246, 238, 224, 0.88));
   background-color: var(--color-bg);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+}
+
+.app::before,
+.app::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.42;
+}
+
+.app::before {
+  inset: 4.5rem auto auto -4rem;
+  width: 16rem;
+  height: 28rem;
+  border: 1px solid var(--color-botanical-line);
+  border-color: transparent var(--color-botanical-line) transparent transparent;
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+
+.app::after {
+  right: -5rem;
+  bottom: 4rem;
+  width: 19rem;
+  height: 19rem;
+  background:
+    radial-gradient(ellipse at 35% 35%, rgba(49, 95, 75, 0.06) 0 24%, transparent 25%),
+    radial-gradient(ellipse at 65% 55%, rgba(190, 141, 128, 0.07) 0 22%, transparent 23%);
+  border-radius: 42% 58% 48% 52%;
+  filter: blur(0.2px);
 }
 
 .container {
@@ -57,9 +94,9 @@ body {
   top: 0;
   z-index: 100;
   height: var(--header-height);
-  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
-  backdrop-filter: blur(12px) saturate(1.1);
-  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  background: color-mix(in srgb, var(--color-cream) 78%, transparent);
+  backdrop-filter: blur(18px) saturate(1.16);
+  -webkit-backdrop-filter: blur(18px) saturate(1.16);
   border-bottom: 1px solid var(--color-border);
   box-shadow: var(--shadow-header);
 }
@@ -130,13 +167,14 @@ body {
 
 .nav-link:hover {
   color: var(--color-green);
-  background: var(--color-green-light);
+  background: color-mix(in srgb, var(--color-green-light) 78%, var(--color-cream));
 }
 
 .nav-link--active {
   color: var(--color-green);
-  background: var(--color-green-light);
+  background: color-mix(in srgb, var(--color-green-light) 82%, var(--color-cream));
   font-weight: 600;
+  box-shadow: var(--shadow-nav-active);
 }
 
 .nav-link:focus-visible {
@@ -202,7 +240,9 @@ body {
 .footer {
   margin-top: auto;
   border-top: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .footer-inner {

@@ -29,8 +29,8 @@
   font-size: var(--text-md);
   line-height: 1.4;
   color: var(--color-text);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border-strong);
+  background: rgba(255, 253, 248, 0.82);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
   transition: border-color var(--transition), box-shadow var(--transition), background-color var(--transition);
 }
@@ -55,7 +55,7 @@ select.form-control {
 
 .form-control:hover {
   border-color: var(--color-accent);
-  background-color: var(--color-surface);
+  background-color: var(--color-cream);
 }
 
 .form-control:focus {
@@ -80,7 +80,8 @@ select.form-control {
   font-size: var(--text-sm);
   color: var(--color-text-muted);
   padding: var(--space-3);
-  background: var(--color-green-light);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-green-light) 76%, var(--color-cream)), var(--color-surface));
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
 }
 
@@ -121,13 +122,15 @@ select.form-control {
   gap: var(--space-3);
   margin-bottom: var(--space-3);
   padding: var(--space-3);
-  background: color-mix(in srgb, var(--color-green-light) 58%, var(--color-surface));
+  background:
+    radial-gradient(circle at 94% 16%, rgba(244, 222, 217, 0.34) 0, transparent 5rem),
+    color-mix(in srgb, var(--color-green-light) 48%, var(--color-surface));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
 }
 
 .form-context--empty {
-  background: var(--color-bg);
+  background: color-mix(in srgb, var(--color-beige) 24%, var(--color-surface));
   border-style: dashed;
 }
 
@@ -137,10 +140,11 @@ select.form-control {
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 253, 248, 0.82);
   color: var(--color-green);
   flex-shrink: 0;
+  border: 1px solid var(--color-border);
 }
 
 .form-context__icon .icon {
@@ -268,7 +272,7 @@ select.form-control {
   font-weight: 600;
   text-align: center;
   color: var(--color-text-muted);
-  background: var(--color-bg);
+  background: rgba(255, 253, 248, 0.74);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
   transition: border-color var(--transition), background var(--transition), color var(--transition);
@@ -285,7 +289,7 @@ select.form-control {
 
 .op-type-option__input:checked + .op-type-option__badge {
   color: var(--color-green);
-  background: var(--color-green-light);
+  background: color-mix(in srgb, var(--color-green-light) 78%, var(--color-cream));
   border-color: var(--color-green);
 }
 
@@ -348,7 +352,7 @@ select.form-control {
   font-weight: 600;
   text-align: center;
   color: var(--color-text-muted);
-  background: var(--color-bg);
+  background: rgba(255, 253, 248, 0.74);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
   transition: border-color var(--transition), background var(--transition), color var(--transition);
@@ -356,9 +360,9 @@ select.form-control {
 
 .payroll-period-option__input:checked + .payroll-period-option__label {
   color: var(--color-green);
-  background: var(--color-green-light);
+  background: color-mix(in srgb, var(--color-green-light) 78%, var(--color-cream));
   border-color: var(--color-green);
-  box-shadow: 0 0 0 2px rgba(47, 107, 79, 0.1);
+  box-shadow: 0 0 0 2px rgba(134, 168, 137, 0.2);
 }
 
 .payroll-period-option__input:focus-visible + .payroll-period-option__label {
@@ -397,7 +401,7 @@ select.form-control {
 
 .confirm-box {
   padding: var(--space-4);
-  background: var(--color-bg);
+  background: color-mix(in srgb, var(--color-cream) 78%, var(--color-surface));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
 }
