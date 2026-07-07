@@ -48,6 +48,7 @@ func (h *Handler) Router() http.Handler {
 	r.Get("/payroll", h.payroll)
 	r.Get("/payroll/calculate", h.payrollCalculate)
 	r.Post("/payroll/confirm", h.payrollConfirm)
+	r.Get("/payments", h.payments)
 	r.Get("/dev/icons", h.devIcons)
 
 	return r

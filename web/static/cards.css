@@ -65,6 +65,8 @@
   border-style: dashed;
   border-color: var(--color-border-strong);
   opacity: 0.85;
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 
 .stat-card--placeholder .stat-value {
@@ -113,6 +115,14 @@
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   margin-top: var(--space-1);
+}
+
+.stat-placeholder-text {
+  max-width: 11rem;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--color-text-muted);
 }
 
 .stat-card-accent .stat-card__hint {
@@ -209,14 +219,14 @@
 
 .empty-state-card__text {
   margin: var(--space-1) 0 0;
-  max-width: 26rem;
+  max-width: 30rem;
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--color-text-muted);
 }
 
 .empty-state-card .btn {
-  margin-top: var(--space-2);
+  margin-top: var(--space-1);
 }
 
 .empty-state-card--compact .btn {
@@ -255,6 +265,56 @@
   .empty-state-card--compact {
     flex-direction: column;
     text-align: center;
+  }
+}
+
+@media (max-width: 430px) {
+  .card {
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+  }
+
+  .stat-card {
+    min-height: 64px;
+    padding: var(--space-3);
+  }
+
+  .stat-value {
+    font-size: var(--text-lg);
+  }
+
+  .stat-card-accent .stat-value {
+    font-size: var(--text-xl);
+  }
+
+  .stat-placeholder-text {
+    max-width: none;
+    font-size: var(--text-xs);
+    line-height: 1.35;
+  }
+
+  .empty-state-card {
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-3);
+  }
+
+  .empty-state-card__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .empty-state-card__icon .icon {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .empty-state-card__text {
+    max-width: 100%;
+  }
+
+  .entity-actions {
+    gap: var(--space-2);
+    margin-top: var(--space-2);
   }
 }
 

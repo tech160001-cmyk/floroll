@@ -10,9 +10,13 @@ import (
 
 	"floroll/internal/employee"
 	"floroll/internal/operation"
+	"floroll/internal/payroll"
+	"floroll/internal/shift"
 
 	"github.com/go-chi/chi/v5"
 )
+
+const employeeProfileRecentLimit = 5
 
 type employeesPageData struct {
 	Title     string
@@ -30,8 +34,10 @@ type employeeFormData struct {
 }
 
 type employeeProfileData struct {
-	Employee   employee.Employee
-	Operations []operation.Operation
+	Employee         employee.Employee
+	RecentShifts     []shift.Shift
+	RecentOperations []operation.Operation
+	RecentPayments   []paymentHistoryView
 }
 
 func (h *Handler) employees(w http.ResponseWriter, r *http.Request) {
@@ -154,16 +160,45 @@ func (h *Handler) employeeDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	recentShifts, err := h.shiftStore.ListRecentByEmployee(r.Context(), emp.ID, employeeProfileRecentLimit)
+	if err != nil {
+		http.Error(w, "не удалось загрузить смены", http.StatusInternalServerError)
+		return
+	}
+
 	operations, err := h.operationStore.ListByEmployee(r.Context(), emp.ID)
 	if err != nil {
 		http.Error(w, "не удалось загрузить операции", http.StatusInternalServerError)
 		return
 	}
+	if len(operations) > employeeProfileRecentLimit {
+		operations = operations[:employeeProfileRecentLimit]
+	}
+
+	payments, err := h.paymentStore.ListRecentByEmployee(r.Context(), emp.ID, employeeProfileRecentLimit)
+	if err != nil {
+		http.Error(w, "не удалось загрузить выплаты", http.StatusInternalServerError)
+		return
+	}
+
+	recentPayments := make([]paymentHistoryView, 0, len(payments))
+	for _, p := range payments {
+		recentPayments = append(recentPayments, paymentHistoryView{
+			Payment:      p,
+			EmployeeName: emp.Name,
+			PeriodLabel: payroll.Period{
+				From: p.PeriodFrom,
+				To:   p.PeriodTo,
+			}.Label(),
+		})
+	}
 
 	var buf bytes.Buffer
 	if err := h.templates.ExecuteTemplate(&buf, "employee-profile-content", employeeProfileData{
-		Employee:   emp,
-		Operations: operations,
+		Employee:         emp,
+		RecentShifts:     recentShifts,
+		RecentOperations: operations,
+		RecentPayments:   recentPayments,
 	}); err != nil {
 		http.Error(w, "ошибка отображения страницы", http.StatusInternalServerError)
 		return

@@ -132,48 +132,120 @@
 {{end}}
 
 {{define "employee-profile-content"}}
-<div class="page">
+<div class="page employee-workspace">
     <a href="/employees" class="back-link">← К сотрудникам</a>
 
-    <header class="card employee-profile-header">
-        <p class="page-eyebrow">Профиль</p>
-        <h1 class="employee-profile-name">{{.Employee.Name}}</h1>
-        {{if .Employee.IsArchived}}<span class="badge badge-soft">В архиве</span>{{end}}
-        <p class="employee-profile-shop">{{.Employee.Shop}}</p>
-        <dl class="employee-profile-stats">
-            <div class="employee-profile-stat">
-                <dt>Ставка</dt>
-                <dd>{{printf "%.0f" .Employee.ShiftRate}} ₽</dd>
+    <header class="card employee-workspace-hero">
+        <div class="employee-workspace-hero__main">
+            <p class="page-eyebrow">Рабочий экран</p>
+            <div class="employee-workspace-hero__title">
+                <h1 class="employee-profile-name">{{.Employee.Name}}</h1>
+                {{if .Employee.IsArchived}}<span class="badge badge-soft">В архиве</span>{{end}}
             </div>
-            <div class="employee-profile-stat">
-                <dt>Процент</dt>
-                <dd>{{printf "%.1f" .Employee.RevenuePercent}}%</dd>
-            </div>
-        </dl>
+            <p class="employee-profile-shop">{{.Employee.Shop}}</p>
+            <p class="employee-card-meta">
+                <span>Ставка <strong>{{printf "%.0f" .Employee.ShiftRate}} ₽</strong></span>
+                <span class="employee-card-meta__sep" aria-hidden="true">·</span>
+                <span>Процент <strong>{{printf "%.1f" .Employee.RevenuePercent}}%</strong></span>
+            </p>
+        </div>
+
+        <div class="employee-quick-actions" aria-label="Быстрые действия">
+            {{if not .Employee.IsArchived}}
+            <a href="/employees/{{.Employee.ID}}/shifts/new" class="btn btn-primary">{{template "icon-plus"}}<span>Добавить смену</span></a>
+            <button type="button"
+                    class="btn btn-secondary modal-trigger"
+                    data-modal-title="Добавить операцию"
+                    hx-get="/employees/{{.Employee.ID}}/operations/form"
+                    hx-target="#modal-content"
+                    hx-swap="innerHTML">
+                {{template "icon-plus"}}<span>Добавить операцию</span>
+            </button>
+            {{end}}
+            <a href="/payroll?employee_id={{.Employee.ID}}" class="btn btn-secondary">{{template "icon-wallet"}}<span>Рассчитать зарплату</span></a>
+        </div>
     </header>
 
-    <section class="employee-profile-section">
-        <h2 class="section-label">Лента операций</h2>
-        <div class="timeline" id="operation-list">
-            {{range .Operations}}
-            {{template "timeline-row" .}}
-            {{else}}
-            {{template "empty-operations" .Employee}}
-            {{end}}
-        </div>
-    </section>
+    <div class="employee-workspace-grid">
+        <section class="employee-workspace-section">
+            <div class="employee-workspace-section__header">
+                <h2 class="section-label">{{template "icon-calendar-days"}}<span>Последние смены</span></h2>
+                <a href="/shifts?employee_id={{.Employee.ID}}" class="btn btn-ghost btn-sm">Все смены</a>
+            </div>
+            <div class="employee-workspace-list">
+                {{range .RecentShifts}}
+                {{template "shifts-row" .}}
+                {{else}}
+                <article class="card employee-workspace-empty">
+                    <h3>Смен ещё нет</h3>
+                    <p>Добавьте первую смену для {{.Employee.Name}}. FloRoll сохранит дату, выручку и оплату по текущей ставке.</p>
+                    {{if not .Employee.IsArchived}}
+                    <a href="/employees/{{.Employee.ID}}/shifts/new" class="btn btn-primary btn-sm">{{template "icon-plus"}}<span>Добавить смену</span></a>
+                    {{end}}
+                </article>
+                {{end}}
+            </div>
+        </section>
 
-    {{if not .Employee.IsArchived}}
-    <button type="button"
-            class="btn btn-primary btn-lg employee-profile-action modal-trigger"
-            data-modal-title="Добавить операцию"
-            hx-get="/employees/{{.Employee.ID}}/operations/form"
-            hx-target="#modal-content"
-            hx-swap="innerHTML">
-        {{template "icon-plus"}}<span>Добавить операцию</span>
-    </button>
-    {{end}}
+        <section class="employee-workspace-section">
+            <div class="employee-workspace-section__header">
+                <h2 class="section-label">{{template "icon-chart-column"}}<span>Последние операции</span></h2>
+                <a href="/employees/{{.Employee.ID}}/operations" class="btn btn-ghost btn-sm">Все операции</a>
+            </div>
+            <div class="timeline employee-workspace-list" id="operation-list">
+                {{range .RecentOperations}}
+                {{template "timeline-row" .}}
+                {{else}}
+                <article class="card employee-workspace-empty">
+                    <h3>Финансовых операций ещё нет</h3>
+                    <p>Операции нужны для авансов, штрафов, премий и удержаний. Добавьте запись, чтобы она попала в расчёт зарплаты.</p>
+                    {{if not .Employee.IsArchived}}
+                    <button type="button"
+                            class="btn btn-primary btn-sm modal-trigger"
+                            data-modal-title="Добавить операцию"
+                            hx-get="/employees/{{.Employee.ID}}/operations/form"
+                            hx-target="#modal-content"
+                            hx-swap="innerHTML">
+                        {{template "icon-plus"}}<span>Добавить операцию</span>
+                    </button>
+                    {{end}}
+                </article>
+                {{end}}
+            </div>
+        </section>
+
+        <section class="employee-workspace-section employee-workspace-section--wide">
+            <div class="employee-workspace-section__header">
+                <h2 class="section-label">{{template "icon-wallet"}}<span>Последние выплаты</span></h2>
+                <a href="/payments" class="btn btn-ghost btn-sm">История выплат</a>
+            </div>
+            <div class="employee-payments-list">
+                {{range .RecentPayments}}
+                {{template "employee-payment-row" .}}
+                {{else}}
+                <article class="card employee-workspace-empty">
+                    <h3>Выплат ещё нет</h3>
+                    <p>После подтверждения выплаты здесь появится история по {{.Employee.Name}}: период, сумма и комментарий.</p>
+                    <a href="/payroll?employee_id={{.Employee.ID}}" class="btn btn-primary btn-sm">{{template "icon-wallet"}}<span>Рассчитать зарплату</span></a>
+                </article>
+                {{end}}
+            </div>
+        </section>
+    </div>
 </div>
+{{end}}
+
+{{define "employee-payment-row"}}
+<article class="card employee-payment-row">
+    <div class="employee-payment-row__main">
+        <h3>{{.PeriodLabel}}</h3>
+        <p>{{formatPaymentDate .Payment.CreatedAt}}</p>
+    </div>
+    <div class="employee-payment-row__meta">
+        <strong>{{printf "%.0f" .Payment.Amount}} ₽</strong>
+        <span>{{if .Payment.Comment}}{{.Payment.Comment}}{{else}}—{{end}}</span>
+    </div>
+</article>
 {{end}}
 
 {{define "employee-detail-content"}}

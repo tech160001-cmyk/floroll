@@ -84,16 +84,29 @@ document.addEventListener("DOMContentLoaded", function () {
       {{end}}>
     {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
 
+    {{if .EmployeeID}}
+    <div class="form-context">
+        <span class="form-context__icon">{{template "icon-user-round"}}</span>
+        <div class="form-context__body">
+            <p class="form-context__title">{{if .EmployeeName}}{{.EmployeeName}}{{else}}Сотрудник выбран{{end}}</p>
+            <p class="form-context__meta">
+                {{if .Shop}}<span>{{.Shop}}</span>{{end}}
+                {{if .Date}}<span>{{.Date}}</span>{{end}}
+            </p>
+        </div>
+    </div>
+    {{else}}
+    <div class="form-context form-context--empty">
+        <span class="form-context__icon">{{template "icon-user-round"}}</span>
+        <div class="form-context__body">
+            <p class="form-context__title">Сначала выберите сотрудника.</p>
+        </div>
+    </div>
+    {{end}}
+
     {{if .LockedEmployee}}
     <input type="hidden" name="employee_id" value="{{.EmployeeID}}">
     <input type="hidden" name="locked_employee" value="1">
-    <div class="operation-form-employee operation-form-employee--locked">
-        <span class="operation-form-employee__icon">{{template "icon-user-round"}}</span>
-        <div class="operation-form-employee__text">
-            <span class="operation-form-employee__label">Сотрудник</span>
-            <span class="operation-form-employee__name">{{.EmployeeName}}</span>
-        </div>
-    </div>
     {{else}}
     <label class="field">
         <span class="field-label">Сотрудник</span>

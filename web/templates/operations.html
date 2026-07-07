@@ -117,15 +117,27 @@
       {{end}}>
     {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
 
-    {{if .LockedEmployee}}
-    <div class="operation-form-employee operation-form-employee--locked">
-        <span class="operation-form-employee__icon">{{template "icon-user-round"}}</span>
-        <div class="operation-form-employee__text">
-            <span class="operation-form-employee__label">Сотрудник</span>
-            <span class="operation-form-employee__name">{{.EmployeeName}}</span>
+    {{if .EmployeeID}}
+    <div class="form-context">
+        <span class="form-context__icon">{{template "icon-user-round"}}</span>
+        <div class="form-context__body">
+            <p class="form-context__title">{{if .EmployeeName}}{{.EmployeeName}}{{else}}Сотрудник выбран{{end}}</p>
+            <p class="form-context__meta">
+                {{range .Employees}}{{if eq $.EmployeeID .ID}}<span>{{.Shop}}</span>{{end}}{{end}}
+                {{if .Date}}<span>{{.Date}}</span>{{end}}
+            </p>
         </div>
     </div>
     {{else}}
+    <div class="form-context form-context--empty">
+        <span class="form-context__icon">{{template "icon-user-round"}}</span>
+        <div class="form-context__body">
+            <p class="form-context__title">Сначала выберите сотрудника.</p>
+        </div>
+    </div>
+    {{end}}
+
+    {{if not .LockedEmployee}}
     <label class="field">
         <span class="field-label">Сотрудник</span>
         <select class="form-control" name="employee_id" required>

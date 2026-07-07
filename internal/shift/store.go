@@ -38,6 +38,39 @@ func (s *Store) List(ctx context.Context) ([]Shift, error) {
 	return scanShifts(rows)
 }
 
+func (s *Store) Count(ctx context.Context) (int, error) {
+	var count int
+	err := s.db.QueryRowContext(ctx, `
+		SELECT COUNT(*)
+		FROM shifts
+		WHERE cancelled_at IS NULL
+	`).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count shifts: %w", err)
+	}
+	return count, nil
+}
+
+func (s *Store) Latest(ctx context.Context) (Shift, error) {
+	row := s.db.QueryRowContext(ctx, `
+		SELECT `+selectColumns+`
+		FROM shifts s
+		LEFT JOIN employees e ON e.id = s.employee_id
+		WHERE s.cancelled_at IS NULL
+		ORDER BY s.shift_date DESC, s.id DESC
+		LIMIT 1
+	`)
+
+	sh, err := scanShift(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Shift{}, ErrNotFound
+		}
+		return Shift{}, fmt.Errorf("latest shift: %w", err)
+	}
+	return sh, nil
+}
+
 func (s *Store) ListByEmployeePeriod(ctx context.Context, employeeID int64, from, to string) ([]Shift, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT `+selectColumns+`
@@ -48,6 +81,27 @@ func (s *Store) ListByEmployeePeriod(ctx context.Context, employeeID int64, from
 	`, employeeID, from, to)
 	if err != nil {
 		return nil, fmt.Errorf("list shifts by period: %w", err)
+	}
+	defer rows.Close()
+
+	return scanShifts(rows)
+}
+
+func (s *Store) ListRecentByEmployee(ctx context.Context, employeeID int64, limit int) ([]Shift, error) {
+	if limit <= 0 {
+		limit = 5
+	}
+
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT `+selectColumns+`
+		FROM shifts s
+		LEFT JOIN employees e ON e.id = s.employee_id
+		WHERE s.employee_id = ? AND s.cancelled_at IS NULL
+		ORDER BY s.shift_date DESC, s.id DESC
+		LIMIT ?
+	`, employeeID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("list recent shifts by employee: %w", err)
 	}
 	defer rows.Close()
 

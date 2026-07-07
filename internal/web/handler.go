@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"database/sql"
+	"errors"
 	"html/template"
 	"net/http"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"floroll/internal/employee"
 	"floroll/internal/operation"
 	"floroll/internal/payment"
+	"floroll/internal/payroll"
 	"floroll/internal/shift"
 )
 
@@ -81,7 +83,61 @@ func (h *Handler) dashboardSummaryData(r *http.Request) (homePageData, error) {
 	if err != nil {
 		return homePageData{}, err
 	}
-	return homePageData{EmployeeCount: count, TotalPay: 0}, nil
+
+	shiftCount, err := h.shiftStore.Count(r.Context())
+	if err != nil {
+		return homePageData{}, err
+	}
+
+	operationCount, err := h.operationStore.Count(r.Context())
+	if err != nil {
+		return homePageData{}, err
+	}
+
+	paymentCount, err := h.paymentStore.Count(r.Context())
+	if err != nil {
+		return homePageData{}, err
+	}
+
+	data := homePageData{
+		EmployeeCount:  count,
+		ShiftCount:     shiftCount,
+		OperationCount: operationCount,
+		PaymentCount:   paymentCount,
+	}
+
+	latestShift, err := h.shiftStore.Latest(r.Context())
+	if err != nil && !errors.Is(err, shift.ErrNotFound) {
+		return homePageData{}, err
+	}
+	if err == nil {
+		data.LatestShift = &latestShift
+	}
+
+	latestOperation, err := h.operationStore.Latest(r.Context())
+	if err != nil && !errors.Is(err, operation.ErrNotFound) {
+		return homePageData{}, err
+	}
+	if err == nil {
+		data.LatestOperation = &latestOperation
+	}
+
+	latestPayment, err := h.paymentStore.LatestHistory(r.Context())
+	if err != nil && !errors.Is(err, payment.ErrNotFound) {
+		return homePageData{}, err
+	}
+	if err == nil {
+		data.LatestPayment = &paymentHistoryView{
+			Payment:      latestPayment.Payment,
+			EmployeeName: latestPayment.EmployeeName,
+			PeriodLabel: payroll.Period{
+				From: latestPayment.Payment.PeriodFrom,
+				To:   latestPayment.Payment.PeriodTo,
+			}.Label(),
+		}
+	}
+
+	return data, nil
 }
 
 func (h *Handler) triggerDashboardRefresh(w http.ResponseWriter) {

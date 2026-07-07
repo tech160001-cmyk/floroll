@@ -21,6 +21,41 @@ const selectColumns = `
 	id, employee_id, op_date, operation_type, amount, comment, COALESCE(cancelled_at, '')
 `
 
+func (s *Store) Count(ctx context.Context) (int, error) {
+	var count int
+	err := s.db.QueryRowContext(ctx, `
+		SELECT COUNT(*)
+		FROM operations
+		WHERE cancelled_at IS NULL
+	`).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count operations: %w", err)
+	}
+	return count, nil
+}
+
+func (s *Store) Latest(ctx context.Context) (Operation, error) {
+	row := s.db.QueryRowContext(ctx, `
+		SELECT
+			o.id, o.employee_id, o.op_date, o.operation_type, o.amount, o.comment,
+			COALESCE(o.cancelled_at, ''), COALESCE(e.name, '')
+		FROM operations o
+		LEFT JOIN employees e ON e.id = o.employee_id
+		WHERE o.cancelled_at IS NULL
+		ORDER BY o.op_date DESC, o.id DESC
+		LIMIT 1
+	`)
+
+	op, err := scanOperationWithEmployee(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Operation{}, ErrNotFound
+		}
+		return Operation{}, fmt.Errorf("latest operation: %w", err)
+	}
+	return op, nil
+}
+
 func (s *Store) ListByEmployee(ctx context.Context, employeeID int64) ([]Operation, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT `+selectColumns+`
@@ -164,6 +199,24 @@ func scanOperation(scanner interface {
 	var opType string
 	if err := scanner.Scan(
 		&op.ID, &op.EmployeeID, &op.Date, &opType, &op.Amount, &op.Comment, &op.CancelledAt,
+	); err != nil {
+		return Operation{}, fmt.Errorf("scan operation: %w", err)
+	}
+	op.Type = Type(opType)
+	if op.Type == "shift" {
+		return Operation{}, fmt.Errorf("scan operation: unexpected shift row")
+	}
+	return op, nil
+}
+
+func scanOperationWithEmployee(scanner interface {
+	Scan(dest ...any) error
+}) (Operation, error) {
+	var op Operation
+	var opType string
+	if err := scanner.Scan(
+		&op.ID, &op.EmployeeID, &op.Date, &opType, &op.Amount, &op.Comment, &op.CancelledAt,
+		&op.EmployeeName,
 	); err != nil {
 		return Operation{}, fmt.Errorf("scan operation: %w", err)
 	}

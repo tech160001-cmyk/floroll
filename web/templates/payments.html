@@ -1,0 +1,61 @@
+{{define "payments-content"}}
+<div class="page payments-page">
+    <header class="page-header">
+        <div class="page-header-text">
+            <p class="page-eyebrow">Финансы</p>
+            <h1 class="page-title">{{template "icon-wallet"}}<span>История выплат</span></h1>
+        </div>
+        <a href="/payroll" class="btn btn-primary btn-add">{{template "icon-wallet"}}<span>Рассчитать зарплату</span></a>
+    </header>
+
+    <div class="payments-list">
+        {{range .Items}}
+        {{template "payment-history-card" .}}
+        {{else}}
+        {{template "empty-payments"}}
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+{{define "payment-history-card"}}
+<details class="card payment-card">
+    <summary class="payment-card__summary">
+        <span class="payment-card__main">
+            <span class="payment-card__employee">{{.EmployeeName}}</span>
+            <span class="payment-card__period">{{.PeriodLabel}}</span>
+        </span>
+        <span class="payment-card__meta">
+            <span class="payment-card__amount">{{printf "%.0f" .Payment.Amount}} ₽</span>
+            <span class="payment-card__date">{{formatPaymentDate .Payment.CreatedAt}}</span>
+        </span>
+        <span class="payment-card__toggle">Открыть расчёт</span>
+    </summary>
+
+    <div class="payment-card__body">
+        <dl class="payment-card__details">
+            <div>
+                <dt>Комментарий</dt>
+                <dd>{{if .Payment.Comment}}{{.Payment.Comment}}{{else}}—{{end}}</dd>
+            </div>
+            <div>
+                <dt>Дата выплаты</dt>
+                <dd>{{formatPaymentDate .Payment.CreatedAt}}</dd>
+            </div>
+        </dl>
+
+        {{template "payroll-payment-breakdown" .Payment}}
+    </div>
+</details>
+{{end}}
+
+{{define "empty-payments"}}
+<article class="card empty-state-card empty-state-card--payroll payments-empty">
+    <div class="empty-state-card__icon">{{template "icon-wallet"}}</div>
+    <div class="empty-state-card__body">
+        <h3 class="empty-state-card__title">Нет выплат</h3>
+        <p class="empty-state-card__text">После подтверждения выплаты здесь появится история. FloRoll сохранит сумму, период, комментарий и snapshot расчёта.</p>
+    </div>
+    <a href="/payroll" class="btn btn-primary">{{template "icon-wallet"}}<span>Перейти к зарплате</span></a>
+</article>
+{{end}}

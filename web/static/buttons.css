@@ -120,3 +120,29 @@ button.btn {
     width: 100%;
   }
 }
+
+@media (max-width: 430px) {
+  .btn {
+    min-height: 38px;
+    padding-inline: var(--space-3);
+    font-size: var(--text-sm);
+    white-space: normal;
+    text-align: center;
+  }
+
+  .btn-sm {
+    min-height: 34px;
+    padding-inline: var(--space-2);
+  }
+
+  .btn-lg {
+    min-height: 42px;
+    padding-inline: var(--space-4);
+    font-size: var(--text-base);
+  }
+
+  .btn .icon {
+    width: 0.9375rem;
+    height: 0.9375rem;
+  }
+}

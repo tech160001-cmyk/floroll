@@ -114,8 +114,8 @@
 {{define "payroll-result-empty"}}
 <article class="card empty-state-card empty-state-card--payroll">
     <div class="empty-state-card__icon">{{template "icon-wallet"}}</div>
-    <h3 class="empty-state-card__title">Расчёт не выполнен</h3>
-    <p class="empty-state-card__text">Выберите сотрудника и период, затем нажмите «Рассчитать» — здесь появится платёжная ведомость.</p>
+    <h3 class="empty-state-card__title">Расчёт ещё не выполнен</h3>
+    <p class="empty-state-card__text">Выберите сотрудника и период. FloRoll соберёт смены и финансовые операции, а затем покажет ведомость для подтверждения выплаты.</p>
 </article>
 {{end}}
 
@@ -147,8 +147,8 @@
     <div class="empty-state-card__icon">{{template "icon-calendar-days"}}</div>
     <h3 class="empty-state-card__title">Нет данных за период</h3>
     <p class="empty-state-card__text">
-        У {{.Employee.Name}} нет смен и операций за {{.Period.Label}}.
-        Добавьте смены или операции, чтобы рассчитать зарплату.
+        У {{.Employee.Name}} пока нет смен и операций за {{.Period.Label}}.
+        Добавьте первую смену или финансовую операцию, чтобы сформировать расчёт за этот период.
     </p>
     <div class="empty-state-card__actions">
         <a href="/shifts?employee_id={{.Employee.ID}}" class="btn btn-primary">{{template "icon-calendar-days"}}<span>Добавить смену</span></a>
@@ -196,7 +196,7 @@
                 {{if .Comment}}<p class="payroll-detail-item__comment">{{.Comment}}</p>{{end}}
             </article>
             {{else}}
-            <p class="payroll-detail-empty">За период нет смен.</p>
+            <p class="payroll-detail-empty">За период нет смен. Добавленные смены покажут оплату за день и выручку.</p>
             {{end}}
         </div>
     </section>
@@ -222,7 +222,7 @@
                 {{if .Comment}}<p class="payroll-detail-item__comment">{{.Comment}}</p>{{end}}
             </article>
             {{else}}
-            <p class="payroll-detail-empty">За период нет финансовых операций.</p>
+            <p class="payroll-detail-empty">За период нет финансовых операций. Авансы, штрафы, премии и удержания появятся здесь после добавления.</p>
             {{end}}
         </div>
     </section>
