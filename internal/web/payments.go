@@ -22,7 +22,7 @@ type paymentHistoryView struct {
 func (h *Handler) payments(w http.ResponseWriter, r *http.Request) {
 	items, err := h.paymentStore.ListHistory(r.Context())
 	if err != nil {
-		h.renderPageError(w, "История выплат", "Не удалось загрузить историю выплат. Попробуйте обновить страницу.")
+		h.renderPageError(w, "Выплаты", "Не удалось загрузить историю выплат. Попробуйте обновить страницу.")
 		return
 	}
 
@@ -42,12 +42,12 @@ func (h *Handler) payments(w http.ResponseWriter, r *http.Request) {
 	if err := h.templates.ExecuteTemplate(&buf, "payments-content", paymentsPageData{
 		Items: viewItems,
 	}); err != nil {
-		h.renderPageError(w, "История выплат", "Не удалось отобразить историю выплат.")
+		h.renderPageError(w, "Выплаты", "Не удалось отобразить историю выплат.")
 		return
 	}
 
 	h.renderPage(w, pageData{
-		Title:   "История выплат",
+		Title:   "Выплаты",
 		Content: template.HTML(buf.String()),
 	})
 }

@@ -1,5 +1,513 @@
 /* Payroll page */
 
+/* Payouts queue (Step 1.2) */
+
+.payouts-page-header {
+  margin-bottom: var(--space-5);
+}
+
+.payouts-page-header__top {
+  margin-bottom: var(--space-4);
+}
+
+.payouts-page-header__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.payouts-page-header__title .icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  color: var(--color-green);
+}
+
+.payouts-page-header__period,
+.payouts-page-header__lead {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.payouts-segment {
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: color-mix(in srgb, var(--color-beige) 30%, var(--color-surface));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.payouts-segment__tab {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-radius: calc(var(--radius-control) - 2px);
+  transition: background var(--transition), color var(--transition);
+}
+
+.payouts-segment__tab:hover {
+  color: var(--color-text);
+}
+
+.payouts-segment__tab--active {
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.payout-complete {
+  margin-bottom: var(--space-4);
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(220, 233, 221, 0.45) 0, transparent 12rem),
+    linear-gradient(180deg, var(--color-cream) 0%, var(--color-surface) 72%);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+}
+
+.payout-complete__emoji {
+  margin: 0 0 var(--space-3);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.payout-complete__title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.payout-complete__link {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-muted) 35%, transparent);
+}
+
+.payout-complete__link:hover {
+  color: var(--color-green);
+  border-bottom-color: color-mix(in srgb, var(--color-green) 45%, transparent);
+}
+
+.payouts .page-header {
+  margin-bottom: var(--space-4);
+}
+
+.payout-hero {
+  margin-bottom: var(--space-5);
+  padding: var(--space-5);
+  text-align: center;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(220, 233, 221, 0.5) 0, transparent 10rem),
+    linear-gradient(180deg, var(--color-cream) 0%, var(--color-surface) 72%);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.payout-hero__label {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.payout-hero__value {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: var(--color-green);
+  font-variant-numeric: tabular-nums;
+}
+
+.payout-hero__period {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.payout-hero__sub {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.payout-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.payout-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: none;
+}
+
+.payout-row--attention,
+.payout-row--idle {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.payout-row__main {
+  min-width: 0;
+}
+
+.payout-row__name {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.payout-row__status {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.payout-row__amount {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--color-green);
+}
+
+.payout-row__amount--muted {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.payout-row__action {
+  justify-self: end;
+}
+
+.payout-row--ready {
+  border-color: color-mix(in srgb, var(--color-green) 24%, var(--color-border));
+}
+
+.payout-row--attention {
+  border-color: color-mix(in srgb, var(--op-fine-accent) 22%, var(--color-border));
+}
+
+.payout-allclear {
+  margin-bottom: var(--space-4);
+  padding: var(--space-5);
+  text-align: center;
+}
+
+.payout-allclear__icon .icon {
+  width: 2rem;
+  height: 2rem;
+  color: var(--color-green);
+}
+
+.payout-allclear__title {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.payout-allclear__text {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.payout-group {
+  margin-bottom: var(--space-3);
+}
+
+.payout-group__summary {
+  cursor: pointer;
+  padding: var(--space-3) var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  list-style: none;
+}
+
+.payout-group__summary::-webkit-details-marker {
+  display: none;
+}
+
+.payout-group__summary::before {
+  content: "▸ ";
+}
+
+.payout-group[open] .payout-group__summary::before {
+  content: "▾ ";
+}
+
+.payout-list--muted .payout-row {
+  background: color-mix(in srgb, var(--color-surface-muted) 55%, var(--color-surface));
+  box-shadow: none;
+}
+
+.payout-advanced {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.payout-advanced__summary {
+  cursor: pointer;
+  padding: var(--space-3) 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  list-style: none;
+}
+
+.payout-advanced__summary::-webkit-details-marker {
+  display: none;
+}
+
+.payout-advanced__hint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.payout-advanced .payroll-form {
+  margin-bottom: 0;
+}
+
+/* Payslip v2 — decision screen */
+
+.payslip-v2 {
+  max-width: 28rem;
+  margin-inline: auto;
+  padding: var(--space-5);
+}
+
+.payslip-v2__header {
+  margin-bottom: var(--space-4);
+  text-align: center;
+}
+
+.payslip-v2__name {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.payslip-v2__period {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.payslip-v2__hero {
+  margin-bottom: var(--space-4);
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(220, 233, 221, 0.55) 0, transparent 9rem),
+    linear-gradient(180deg, var(--color-cream) 0%, var(--color-surface) 70%);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+}
+
+.payslip-v2__hero-label {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.payslip-v2__hero-value {
+  margin: 0;
+  font-size: clamp(2.25rem, 7vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--color-green);
+  font-variant-numeric: tabular-nums;
+}
+
+.payslip-v2__summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.payslip-v2__summary--compact {
+  margin-bottom: 0;
+}
+
+.payslip-v2__summary-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  font-size: var(--text-base);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.payslip-v2__summary-line--total {
+  font-weight: 700;
+  border-bottom: none;
+  padding-top: var(--space-3);
+}
+
+.payslip-v2__summary-label {
+  color: var(--color-text-muted);
+}
+
+.payslip-v2__summary-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.payslip-v2__summary-value--minus {
+  color: var(--op-fine-accent);
+}
+
+.payslip-v2__details {
+  margin-bottom: var(--space-4);
+}
+
+.payslip-v2__details-summary {
+  cursor: pointer;
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  list-style: none;
+}
+
+.payslip-v2__details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.payslip-v2__details-summary::before {
+  content: "▸ ";
+}
+
+.payslip-v2__details[open] .payslip-v2__details-summary::before {
+  content: "▾ ";
+}
+
+.payroll-slip-details {
+  padding-top: var(--space-3);
+}
+
+.payslip-v2__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.payslip-v2__comment {
+  margin: 0;
+}
+
+.payslip-v2__confirm-btn {
+  width: 100%;
+}
+
+.payslip-v2__notice {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-beige) 35%, var(--color-surface));
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+}
+
+.payslip-v2__back {
+  width: 100%;
+  justify-content: center;
+}
+
+.payslip-done {
+  max-width: 28rem;
+  margin-inline: auto;
+  padding: var(--space-5);
+  text-align: center;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(220, 233, 221, 0.45) 0, transparent 10rem),
+    linear-gradient(180deg, var(--color-green-light) 0%, var(--color-surface) 65%);
+  border-color: var(--color-border-strong);
+}
+
+.payslip-done__eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-green);
+}
+
+.payslip-done__name {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.payslip-done__amount {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--color-green);
+  font-variant-numeric: tabular-nums;
+}
+
+.payslip-done__meta {
+  margin: var(--space-2) 0 var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.payslip-done__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.payslip-done__next {
+  width: 100%;
+}
+
 .payroll-form {
   display: flex;
   flex-direction: column;
@@ -448,6 +956,20 @@
 }
 
 @media (max-width: 767px) {
+  .payout-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .payout-row__amount {
+    justify-self: start;
+  }
+
+  .payout-row__action {
+    justify-self: stretch;
+    width: 100%;
+  }
+
   .payroll-form-submit,
   .payslip-confirm__submit {
     width: 100%;

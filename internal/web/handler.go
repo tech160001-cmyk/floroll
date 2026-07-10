@@ -33,8 +33,10 @@ func NewHandler(db *sql.DB) (*Handler, error) {
 	pattern := filepath.Join(root, "web", "templates", "*.html")
 
 	templates := template.New("").Funcs(template.FuncMap{
-		"shiftCountLabel":   shiftCountLabel,
-		"formatPaymentDate": formatPaymentDate,
+		"shiftCountLabel":     shiftCountLabel,
+		"formatPaymentDate":   formatPaymentDate,
+		"formatMoney":         formatMoney,
+		"payrollDueSubtitle":  payrollDueSubtitle,
 	})
 	templates, err := templates.ParseGlob(pattern)
 	if err != nil {

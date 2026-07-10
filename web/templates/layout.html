@@ -27,8 +27,7 @@
             <nav class="nav" aria-label="Основная навигация">
                 <a href="/employees" class="nav-link">{{template "icon-user-round"}}<span>Сотрудники</span></a>
                 <a href="/shifts" class="nav-link">{{template "icon-calendar-days"}}<span>Смены</span></a>
-                <a href="/payroll" class="nav-link">{{template "icon-wallet"}}<span>Зарплата</span></a>
-                <a href="/payments" class="nav-link">{{template "icon-chart-column"}}<span>История выплат</span></a>
+                <a href="/payroll" class="nav-link nav-link--payouts">{{template "icon-wallet"}}<span>Выплаты</span></a>
             </nav>
         </div>
     </header>
@@ -61,6 +60,11 @@
         document.querySelectorAll(".nav-link").forEach(function (link) {
             var href = link.getAttribute("href");
             if (!href || href === "/") {
+                return;
+            }
+            var isPayouts = link.classList.contains("nav-link--payouts");
+            if (isPayouts && (path === "/payroll" || path.indexOf("/payroll/") === 0 || path === "/payments")) {
+                link.classList.add("nav-link--active");
                 return;
             }
             if (path === href || path.indexOf(href + "/") === 0) {

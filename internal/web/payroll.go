@@ -15,11 +15,6 @@ import (
 	"floroll/internal/payroll"
 )
 
-type payrollPageData struct {
-	Employees []employee.Employee
-	Form      payrollFormData
-}
-
 type payrollFormData struct {
 	EmployeeID   string
 	PeriodPreset string
@@ -33,6 +28,13 @@ type payrollPaidView struct {
 	Employee employee.Employee
 	Period   payroll.Period
 	Payment  payment.Payment
+	Next     *payoutNextEmployee
+}
+
+type payoutNextEmployee struct {
+	Employee employee.Employee
+	Preset   payroll.Preset
+	Month    string
 }
 
 type payrollErrorData struct {
@@ -41,25 +43,20 @@ type payrollErrorData struct {
 }
 
 func (h *Handler) payroll(w http.ResponseWriter, r *http.Request) {
-	employees, err := h.employeeStore.List(r.Context())
+	data, err := h.buildPayoutsPage(r.Context(), r)
 	if err != nil {
-		h.renderPageError(w, "Зарплата", "Не удалось загрузить сотрудников. Попробуйте обновить страницу.")
+		h.renderPageError(w, "Выплаты", "Не удалось загрузить выплаты. Попробуйте обновить страницу.")
 		return
 	}
 
-	form := payrollFormFromRequest(r, employees)
-
 	var buf bytes.Buffer
-	if err := h.templates.ExecuteTemplate(&buf, "payroll-content", payrollPageData{
-		Employees: employees,
-		Form:      form,
-	}); err != nil {
-		h.renderPageError(w, "Зарплата", "Не удалось отобразить страницу расчёта.")
+	if err := h.templates.ExecuteTemplate(&buf, "payroll-content", data); err != nil {
+		h.renderPageError(w, "Выплаты", "Не удалось отобразить страницу выплат.")
 		return
 	}
 
 	h.renderPage(w, pageData{
-		Title:   "Зарплата",
+		Title:   "Выплаты",
 		Content: template.HTML(buf.String()),
 	})
 }
@@ -147,6 +144,7 @@ func (h *Handler) payrollConfirm(w http.ResponseWriter, r *http.Request) {
 			Employee: result.Employee,
 			Period:   result.Period,
 			Payment:  existing,
+			Next:     h.nextReadyEmployeeAfter(ctx, result.Employee.ID, period),
 		})
 		return
 	}
@@ -173,6 +171,7 @@ func (h *Handler) payrollConfirm(w http.ResponseWriter, r *http.Request) {
 		Employee: result.Employee,
 		Period:   result.Period,
 		Payment:  created,
+		Next:     h.nextReadyEmployeeAfter(ctx, result.Employee.ID, result.Period),
 	})
 }
 
@@ -183,6 +182,7 @@ func (h *Handler) renderPayrollResult(w http.ResponseWriter, ctx context.Context
 			Employee: result.Employee,
 			Period:   result.Period,
 			Payment:  existing,
+			Next:     h.nextReadyEmployeeAfter(ctx, result.Employee.ID, result.Period),
 		})
 		return
 	}
