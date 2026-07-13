@@ -2,12 +2,23 @@ package web
 
 import (
 	"fmt"
+	"html/template"
 	"strconv"
 	"strings"
 	"time"
 
 	"floroll/internal/payroll"
 )
+
+func templateFuncMap() template.FuncMap {
+	return template.FuncMap{
+		"shiftCountLabel":     shiftCountLabel,
+		"formatPaymentDate":   formatPaymentDate,
+		"formatMoney":         formatMoney,
+		"payrollDueSubtitle":  payrollDueSubtitle,
+		"employeeCountPhrase": employeeCountPhrase,
+	}
+}
 
 func shiftCountLabel(n int) string {
 	mod := n % 100
@@ -61,6 +72,48 @@ func formatPaymentDate(value string) string {
 
 func formatDateRu(t time.Time) string {
 	return strconv.Itoa(t.Day()) + " " + paymentMonthsRu[int(t.Month())] + " " + strconv.Itoa(t.Year())
+}
+
+var weekdaysRu = map[time.Weekday]string{
+	time.Monday:    "Понедельник",
+	time.Tuesday:   "Вторник",
+	time.Wednesday: "Среда",
+	time.Thursday:  "Четверг",
+	time.Friday:    "Пятница",
+	time.Saturday:  "Суббота",
+	time.Sunday:    "Воскресенье",
+}
+
+// formatTodayRu renders "Понедельник, 13 июля" for the Today header.
+func formatTodayRu(t time.Time) string {
+	return weekdaysRu[t.Weekday()] + ", " + strconv.Itoa(t.Day()) + " " + paymentMonthsRu[int(t.Month())]
+}
+
+// closingPhrase describes how much of the open period is left, calmly.
+func closingPhrase(daysLeft int) string {
+	switch {
+	case daysLeft <= 0:
+		return "закрывается сегодня"
+	case daysLeft == 1:
+		return "закрывается завтра"
+	default:
+		return "закрывается через " + strconv.Itoa(daysLeft) + " " + dayWordRu(daysLeft)
+	}
+}
+
+func dayWordRu(n int) string {
+	mod100 := n % 100
+	if mod100 >= 11 && mod100 <= 14 {
+		return "дней"
+	}
+	switch n % 10 {
+	case 1:
+		return "день"
+	case 2, 3, 4:
+		return "дня"
+	default:
+		return "дней"
+	}
 }
 
 func formatMoney(amount float64) string {

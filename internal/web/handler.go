@@ -3,7 +3,6 @@ package web
 import (
 	"bytes"
 	"database/sql"
-	"errors"
 	"html/template"
 	"net/http"
 	"path/filepath"
@@ -11,7 +10,6 @@ import (
 	"floroll/internal/employee"
 	"floroll/internal/operation"
 	"floroll/internal/payment"
-	"floroll/internal/payroll"
 	"floroll/internal/shift"
 )
 
@@ -32,12 +30,7 @@ func NewHandler(db *sql.DB) (*Handler, error) {
 	root := projectRoot()
 	pattern := filepath.Join(root, "web", "templates", "*.html")
 
-	templates := template.New("").Funcs(template.FuncMap{
-		"shiftCountLabel":     shiftCountLabel,
-		"formatPaymentDate":   formatPaymentDate,
-		"formatMoney":         formatMoney,
-		"payrollDueSubtitle":  payrollDueSubtitle,
-	})
+	templates := template.New("").Funcs(templateFuncMap())
 	templates, err := templates.ParseGlob(pattern)
 	if err != nil {
 		return nil, err
@@ -53,93 +46,31 @@ func NewHandler(db *sql.DB) (*Handler, error) {
 }
 
 func (h *Handler) home(w http.ResponseWriter, r *http.Request) {
-	summary, err := h.dashboardSummaryData(r)
+	data, err := h.buildTodayData(r)
 	if err != nil {
 		http.Error(w, "не удалось загрузить данные", http.StatusInternalServerError)
 		return
 	}
 
 	var buf bytes.Buffer
-	if err := h.templates.ExecuteTemplate(&buf, "home-content", summary); err != nil {
+	if err := h.templates.ExecuteTemplate(&buf, "home-content", data); err != nil {
 		http.Error(w, "ошибка отображения страницы", http.StatusInternalServerError)
 		return
 	}
 
 	h.renderPage(w, pageData{
-		Title:   "Главная",
+		Title:   "Сегодня",
 		Content: template.HTML(buf.String()),
 	})
 }
 
 func (h *Handler) dashboardSummary(w http.ResponseWriter, r *http.Request) {
-	summary, err := h.dashboardSummaryData(r)
+	data, err := h.buildTodayData(r)
 	if err != nil {
 		http.Error(w, "не удалось загрузить данные", http.StatusInternalServerError)
 		return
 	}
-	h.renderPartial(w, "dashboard-summary", summary)
-}
-
-func (h *Handler) dashboardSummaryData(r *http.Request) (homePageData, error) {
-	count, err := h.employeeStore.Count(r.Context())
-	if err != nil {
-		return homePageData{}, err
-	}
-
-	shiftCount, err := h.shiftStore.Count(r.Context())
-	if err != nil {
-		return homePageData{}, err
-	}
-
-	operationCount, err := h.operationStore.Count(r.Context())
-	if err != nil {
-		return homePageData{}, err
-	}
-
-	paymentCount, err := h.paymentStore.Count(r.Context())
-	if err != nil {
-		return homePageData{}, err
-	}
-
-	data := homePageData{
-		EmployeeCount:  count,
-		ShiftCount:     shiftCount,
-		OperationCount: operationCount,
-		PaymentCount:   paymentCount,
-	}
-
-	latestShift, err := h.shiftStore.Latest(r.Context())
-	if err != nil && !errors.Is(err, shift.ErrNotFound) {
-		return homePageData{}, err
-	}
-	if err == nil {
-		data.LatestShift = &latestShift
-	}
-
-	latestOperation, err := h.operationStore.Latest(r.Context())
-	if err != nil && !errors.Is(err, operation.ErrNotFound) {
-		return homePageData{}, err
-	}
-	if err == nil {
-		data.LatestOperation = &latestOperation
-	}
-
-	latestPayment, err := h.paymentStore.LatestHistory(r.Context())
-	if err != nil && !errors.Is(err, payment.ErrNotFound) {
-		return homePageData{}, err
-	}
-	if err == nil {
-		data.LatestPayment = &paymentHistoryView{
-			Payment:      latestPayment.Payment,
-			EmployeeName: latestPayment.EmployeeName,
-			PeriodLabel: payroll.Period{
-				From: latestPayment.Payment.PeriodFrom,
-				To:   latestPayment.Payment.PeriodTo,
-			}.Label(),
-		}
-	}
-
-	return data, nil
+	h.renderPartial(w, "today-state", data)
 }
 
 func (h *Handler) triggerDashboardRefresh(w http.ResponseWriter) {

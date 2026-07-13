@@ -1,107 +1,60 @@
 {{define "home-content"}}
-<div class="dashboard">
-    <header class="dashboard-hero">
-        <div class="dashboard-hero__text">
-            <p class="dashboard-eyebrow">FloRoll</p>
-            <h1 class="dashboard-title">Что произошло последним?</h1>
-            <p class="dashboard-subtitle">Последние действия магазина и то, что можно сделать прямо сейчас.</p>
-        </div>
-    </header>
-
-    <section class="card dashboard-quick-actions" aria-labelledby="quick-actions-title">
-        <div class="dashboard-quick-actions__text">
-            <h2 id="quick-actions-title">Быстрые действия</h2>
-            <p>Рабочие действия на день: смена, операция, зарплата.</p>
-        </div>
-        <div class="dashboard-quick-actions__buttons">
-            <button type="button"
-                    class="btn btn-primary modal-trigger"
-                    data-modal-title="Добавить смену"
-                    hx-get="/shifts/form"
-                    hx-target="#modal-content"
-                    hx-swap="innerHTML">
-                {{template "icon-plus"}}<span>Добавить смену</span>
-            </button>
-            <button type="button"
-                    class="btn btn-secondary modal-trigger"
-                    data-modal-title="Добавить операцию"
-                    hx-get="/operations/form"
-                    hx-target="#modal-content"
-                    hx-swap="innerHTML">
-                {{template "icon-plus"}}<span>Добавить операцию</span>
-            </button>
-            <a href="/payroll" class="btn btn-secondary">{{template "icon-wallet"}}<span>Рассчитать зарплату</span></a>
-        </div>
-    </section>
-
-    {{template "dashboard-summary" .}}
+<div class="today">
+    <p class="today__date">{{.DateLabel}}</p>
+    {{template "today-state" .}}
 </div>
 {{end}}
 
-{{define "dashboard-summary"}}
+{{define "today-state"}}
 <div id="dashboard-summary"
-     class="dashboard-live"
+     class="today__live"
      hx-get="/dashboard/summary"
      hx-trigger="dashboard-refresh from:body"
      hx-swap="outerHTML">
-    <section class="dashboard-today" aria-labelledby="dashboard-today-title">
-        <h2 id="dashboard-today-title" class="section-label">{{template "icon-chart-column"}}<span>Последние события</span></h2>
-        <div class="dashboard-today-grid">
-            <article class="card dashboard-today-card">
-                <span class="dashboard-today-card__label">{{template "icon-calendar-days"}}<span>Последняя смена</span></span>
-                {{if .LatestShift}}
-                <strong class="dashboard-today-card__title">{{.LatestShift.EmployeeName}}</strong>
-                <p class="dashboard-today-card__meta">{{.LatestShift.Date}} · {{.LatestShift.Shop}}</p>
-                <p class="dashboard-today-card__value">{{printf "%.0f" .LatestShift.Payment}} ₽ за смену</p>
-                {{else}}
-                <strong class="dashboard-today-card__title">Смен ещё нет</strong>
-                <p class="dashboard-today-card__placeholder">Появится после первых смен.</p>
-                {{end}}
-            </article>
 
-            <article class="card dashboard-today-card">
-                <span class="dashboard-today-card__label">{{template "icon-chart-column"}}<span>Последняя операция</span></span>
-                {{if .LatestOperation}}
-                <strong class="dashboard-today-card__title">{{.LatestOperation.Type.Label}} · {{printf "%.0f" .LatestOperation.Amount}} ₽</strong>
-                <p class="dashboard-today-card__meta">{{.LatestOperation.Date}}{{if .LatestOperation.EmployeeName}} · {{.LatestOperation.EmployeeName}}{{end}}</p>
-                <p class="dashboard-today-card__value">{{if .LatestOperation.Comment}}{{.LatestOperation.Comment}}{{else}}Без комментария{{end}}</p>
-                {{else}}
-                <strong class="dashboard-today-card__title">Операций ещё нет</strong>
-                <p class="dashboard-today-card__placeholder">После операций появится журнал.</p>
-                {{end}}
-            </article>
-
-            <article class="card dashboard-today-card">
-                <span class="dashboard-today-card__label">{{template "icon-wallet"}}<span>Последняя выплата</span></span>
-                {{if .LatestPayment}}
-                <strong class="dashboard-today-card__title">{{.LatestPayment.EmployeeName}}</strong>
-                <p class="dashboard-today-card__meta">{{.LatestPayment.PeriodLabel}} · {{formatPaymentDate .LatestPayment.Payment.CreatedAt}}</p>
-                <p class="dashboard-today-card__value">{{printf "%.0f" .LatestPayment.Payment.Amount}} ₽</p>
-                {{else}}
-                <strong class="dashboard-today-card__title">Выплат ещё нет</strong>
-                <p class="dashboard-today-card__placeholder">После первой выплаты здесь появится история.</p>
-                {{end}}
-            </article>
-        </div>
+    {{if .IsNoEmployees}}
+    <section class="today-hero today-hero--calm">
+        <p class="today-hero__lead">Пока никого нет в команде</p>
+        <p class="today-hero__note">Добавьте первого сотрудника — с этого начинается работа FloRoll.</p>
+        <a href="/employees" class="btn btn-primary btn-lg today-hero__action">Добавить сотрудника</a>
     </section>
 
-    <section class="dashboard-compact-stats" aria-label="Краткая сводка">
-        <article class="card stat-card card--interactive">
-            <span class="stat-label">{{template "icon-user-round"}}<span>Активные сотрудники</span></span>
-            <span class="stat-value">{{.EmployeeCount}}</span>
-        </article>
-        <article class="card stat-card card--interactive">
-            <span class="stat-label">{{template "icon-calendar-days"}}<span>Смены</span></span>
-            <span class="stat-value">{{.ShiftCount}}</span>
-        </article>
-        <article class="card stat-card card--interactive">
-            <span class="stat-label">{{template "icon-chart-column"}}<span>Операции</span></span>
-            <span class="stat-value">{{.OperationCount}}</span>
-        </article>
-        <article class="card stat-card card--interactive">
-            <span class="stat-label">{{template "icon-wallet"}}<span>Выплаты</span></span>
-            <span class="stat-value">{{.PaymentCount}}</span>
-        </article>
+    {{else if .IsReadyToPay}}
+    <section class="today-hero today-hero--pay">
+        <p class="today-hero__label">Пора платить</p>
+        <p class="today-hero__value">{{formatMoney .TotalToPay}}</p>
+        <p class="today-hero__note">{{employeeCountPhrase .ReadyCount}} готов{{if ne .ReadyCount 1}}ы{{end}} к выплате · {{.PeriodLabel}}</p>
+        <a href="/payroll" class="btn btn-primary btn-lg today-hero__action">{{template "icon-wallet"}}<span>Перейти к выплатам</span></a>
     </section>
+
+    {{else if .IsClosingSoon}}
+    <section class="today-hero today-hero--soon">
+        <p class="today-hero__lead">Период {{.PeriodLabel}} {{.ClosingNote}}</p>
+        <p class="today-hero__note">Проверьте смены — скоро расчёт и выплаты.</p>
+        <a href="/payroll" class="btn btn-secondary today-hero__action">Открыть выплаты</a>
+    </section>
+
+    {{else}}
+    <section class="today-hero today-hero--calm">
+        <p class="today-hero__leaf" aria-hidden="true">🌿</p>
+        <p class="today-hero__lead">На сегодня всё сделано</p>
+        <p class="today-hero__note">Период {{.PeriodLabel}} · {{.ClosingNote}}</p>
+    </section>
+    {{end}}
+
+    {{if .AttentionCount}}
+    <a href="/payroll" class="today-attention">{{employeeCountPhrase .AttentionCount}} требу{{if eq .AttentionCount 1}}ет{{else}}ют{{end}} внимания</a>
+    {{end}}
+
+    {{if .ShowShiftAction}}
+    <button type="button"
+            class="today-quick modal-trigger"
+            data-modal-title="Внести смену"
+            hx-get="/shifts/form"
+            hx-target="#modal-content"
+            hx-swap="innerHTML">
+        {{template "icon-plus"}}<span>Внести смену</span>
+    </button>
+    {{end}}
 </div>
 {{end}}
